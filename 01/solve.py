@@ -10,6 +10,8 @@ def load_freqs(filename):
 			freqs.append(n)
 	return freqs
 
+# PART 2
+
 def find_repeat(freqs):
 	total = 0
 	found = {total}
@@ -24,11 +26,9 @@ def find_repeat(freqs):
 
 def main(filename):
 	freqs = load_freqs(filename)
-	print("  Part 1")
-	print(f"Total: {sum(freqs)}")
-	print()
-	print("  Part 2")
-	print(f"First repeat: {find_repeat(freqs)}")
+	print(f"Solutions for {filename}")
+	print(f"Part 1: {sum(freqs)}")
+	print(f"Part 2: {find_repeat(freqs)}")
 
 if __name__ == "__main__":
 	for filename in sys.argv[1:]:
