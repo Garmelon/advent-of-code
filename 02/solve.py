@@ -54,8 +54,9 @@ def common_chars(a, b):
 def main(filename):
 	words = load_words(filename)
 	print(f"Solutions for {filename}")
+	print(f"Part 1: {checksum(words)}")
 	a, b = find_ids(words)
-	print(f"Part 1: {common_chars(a, b)}")
+	print(f"Part 2: {common_chars(a, b)}")
 
 if __name__ == "__main__":
 	for filename in sys.argv[1:]:
