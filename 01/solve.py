@@ -4,9 +4,7 @@ def load_freqs(filename):
 	freqs = []
 	with open(filename, "r") as f:
 		for line in f:
-			n = int(line[1:-1])
-			if line[0] == "-":
-				n = -n
+			n = int(line[:-1])
 			freqs.append(n)
 	return freqs
 
