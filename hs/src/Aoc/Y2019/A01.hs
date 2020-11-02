@@ -12,8 +12,10 @@ solve201901 :: FilePath -> IO ()
 solve201901 f = do
   values <- map read . lines <$> readFile f
 
+  putStrLn ">> Part 1"
   putStr "Total fuel: "
   print $ sum $ map fuel values
 
+  putStrLn ">> Part 2"
   putStr "Total fuel (iterated): "
   print $ sum $ map iteratedFuel values
