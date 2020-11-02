@@ -11,7 +11,7 @@ data Settings = Settings
 
 solutions :: Parser (FilePath -> IO ())
 solutions = subparser $ mconcat $ map (\(name, func) -> command name (info (pure func) mempty))
-  [ ("201901", solve201901)
+  [ ("2019_01", solve201901)
   ]
 
 parser :: Parser Settings
@@ -24,5 +24,5 @@ opts = info (helper <*> parser) $ fullDesc <> failureCode 1
 
 main :: IO ()
 main = do
-  settings <- execParser opts
+  settings <- customExecParser (prefs showHelpOnEmpty) opts
   function settings $ filename settings
