@@ -83,11 +83,6 @@ run s = case step s of
   Left e -> (s, e)
   Right s' -> run s'
 
-steps :: State -> [State]
-steps s = s : case step s of
-  Left _ -> []
-  Right s' -> steps s'
-
 patch :: Int -> Int -> Memory -> Memory
 patch noun verb = writeMem 2 verb . writeMem 1 noun
 
@@ -97,12 +92,13 @@ solve201902 f = do
   let mem = newMem values
 
   putStrLn ">> Part 1"
-  let (s, _) = run $ newState $ patch 12 2 mem
-  putStrLn $ "Value at position 0: " <> show (readMem 0 $ stateMem s)
+  let (s1, _) = run $ newState $ patch 12 2 mem
+  putStrLn $ "Value at position 0: " <> show (readMem 0 $ stateMem s1)
 
   putStrLn ">> Part 2"
   let attempts = [(noun, verb) | noun <- [0..99], verb <- [0..99]]
   for_ attempts $ \(noun, verb) -> do
-    let (s, _) = run $ newState $ patch noun verb mem
-        (Just result) = readMem 0 $ stateMem s
-    when (result == 19690720) $ putStrLn $ "100 * noun + verb = " <> show (100 * noun + verb)
+    let (s2, _) = run $ newState $ patch noun verb mem
+        Just result = readMem 0 $ stateMem s2
+    when (result == 19690720) $
+      putStrLn $ "100 * noun + verb = " <> show (100 * noun + verb)
