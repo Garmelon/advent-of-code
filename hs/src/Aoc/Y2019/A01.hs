@@ -10,7 +10,7 @@ iteratedFuel = sum . takeWhile (> 0) . tail . iterate fuel
 
 solve201901 :: FilePath -> IO ()
 solve201901 f = do
-  values <- (map read . lines) <$> readFile f
+  values <- map read . lines <$> readFile f
 
   putStr "Total fuel: "
   print $ sum $ map fuel values
