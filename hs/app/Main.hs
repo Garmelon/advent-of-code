@@ -3,6 +3,7 @@ module Main where
 import Options.Applicative
 
 import Aoc.Y2019
+import Aoc.Y2020
 
 data Settings = Settings
   { function :: FilePath -> IO ()
@@ -16,6 +17,7 @@ solutions = subparser $ mconcat $ map (\(name, func) -> command name (info (pure
   , ("2019_03", solve201903)
   , ("2019_04", solve201904)
   , ("2019_05", solve201905)
+  , ("2020_01", solve202001)
   ]
 
 parser :: Parser Settings
