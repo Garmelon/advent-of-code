@@ -4,7 +4,7 @@ module Aoc.Day
   , dayFile
   , dayString
   , dayText
-  , dayParser
+  , dayParse
   ) where
 
 import           Control.Monad
@@ -31,8 +31,8 @@ dayString name f = dayFile name $ f <=< readFile
 dayText :: String -> (T.Text -> IO ()) -> Day
 dayText name f = dayFile name $ f <=< T.readFile
 
-dayParser :: String -> Parser a -> (a -> IO ()) -> Day
-dayParser name p f = dayFile name $ \path -> do
+dayParse :: String -> Parser a -> (a -> IO ()) -> Day
+dayParse name p f = dayFile name $ \path -> do
   text <- T.readFile path
   case parse p path text of
     Right a -> f a
