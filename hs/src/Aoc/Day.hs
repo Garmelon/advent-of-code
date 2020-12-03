@@ -4,16 +4,16 @@ module Aoc.Day
   , dayFile
   , dayString
   , dayText
-  , Parser
   , dayParser
   ) where
 
 import           Control.Monad
-import           Data.Void
 
 import qualified Data.Text       as T
 import qualified Data.Text.IO    as T
 import           Text.Megaparsec
+
+import           Aoc.Parse
 
 data Day
   = DayPure String (IO ())
@@ -30,8 +30,6 @@ dayString name f = dayFile name $ f <=< readFile
 
 dayText :: String -> (T.Text -> IO ()) -> Day
 dayText name f = dayFile name $ f <=< T.readFile
-
-type Parser = Parsec Void T.Text
 
 dayParser :: String -> Parser a -> (a -> IO ()) -> Day
 dayParser name p f = dayFile name $ \path -> do
