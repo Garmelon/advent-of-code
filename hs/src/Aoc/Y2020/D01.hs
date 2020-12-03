@@ -31,8 +31,9 @@ solver values = do
   let (x1, x2) = findPair values
   putStrLn $ show x1 ++ " * " ++ show x2 ++ " = " ++ show (x1 * x2)
 
-  let (y1, y2, y3) = findTriple values
+  putStrLn ""
   putStrLn ">> Part 2"
+  let (y1, y2, y3) = findTriple values
   putStrLn $ show y1 ++ " * " ++ show y2 ++ " * " ++ show y3 ++ " = " ++ show (y1 * y2 * y3)
 
 day :: Day

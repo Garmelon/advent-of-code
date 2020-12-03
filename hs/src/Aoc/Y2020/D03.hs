@@ -7,18 +7,21 @@ import           Data.List
 import           Aoc.Day
 import           Aoc.Parse
 
-parser :: Parser [[Bool]]
+type Forest = [[Bool]]
+type Slope = [Maybe Int]
+
+parser :: Parser Forest
 parser = manyLines $ many $ do
   c <- lineChar
   pure $ c == '#'
 
-slope :: Int -> Int -> [Maybe Int]
+slope :: Int -> Int -> Slope
 slope dx dy = intercalate (replicate (dy - 1) Nothing) [[Just x] | x <- [0,dx..]]
 
-onSlope :: [[Bool]] -> [Maybe Int] -> Int
-onSlope trees s = length $ filter id $ [row !! x | (row, Just x) <- zip trees s]
+onSlope :: Forest -> Slope -> Int
+onSlope trees s = length $ filter id [row !! x | (row, Just x) <- zip trees s]
 
-solver :: [[Bool]] -> IO ()
+solver :: Forest -> IO ()
 solver trees = do
   let infTrees = map cycle trees
 
@@ -26,12 +29,13 @@ solver trees = do
   let treesHit = length $ filter id $ zipWith (!!) infTrees [0,3..]
   putStrLn $ "Trees hit for slope 3-1: " ++ show treesHit
 
+  putStrLn ""
   putStrLn ">> Part 2"
-  let oneOne = onSlope infTrees $ slope 1 1
+  let oneOne   = onSlope infTrees $ slope 1 1
       threeOne = onSlope infTrees $ slope 3 1
-      fiveOne = onSlope infTrees $ slope 5 1
+      fiveOne  = onSlope infTrees $ slope 5 1
       sevenOne = onSlope infTrees $ slope 7 1
-      oneTwo = onSlope infTrees $ slope 1 2
+      oneTwo   = onSlope infTrees $ slope 1 2
   putStrLn $ "right 1, down 1: " ++ show oneOne
   putStrLn $ "right 3, down 1: " ++ show threeOne
   putStrLn $ "right 5, down 1: " ++ show fiveOne

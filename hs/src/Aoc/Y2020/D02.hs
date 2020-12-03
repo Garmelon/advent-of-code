@@ -2,7 +2,7 @@ module Aoc.Y2020.D02
   ( day
   ) where
 
-import qualified Data.Text     as T
+import qualified Data.Text as T
 
 import           Aoc.Day
 import           Aoc.Parse
@@ -37,6 +37,7 @@ solver ls = do
   putStrLn ">> Part 1"
   print $ length $ filter validCount ls
 
+  putStrLn ""
   putStrLn ">> Part 2"
   print $ length $ filter validPositions ls
 
