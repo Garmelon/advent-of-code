@@ -34,6 +34,6 @@ dayText name f = dayFile name $ f <=< T.readFile
 dayParse :: String -> Parser a -> (a -> IO ()) -> Day
 dayParse name p f = dayFile name $ \path -> do
   text <- T.readFile path
-  case parse p path text of
+  case parse (p <* eof) path text of
     Right a -> f a
     Left e  -> putStrLn $ errorBundlePretty e
