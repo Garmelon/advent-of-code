@@ -1,5 +1,6 @@
 module Aoc.Day
   ( Day(..)
+  , runDay
   , dayPure
   , dayFile
   , dayString
@@ -18,6 +19,11 @@ import           Aoc.Parse
 data Day
   = DayPure String (IO ())
   | DayFile String (FilePath -> IO ())
+
+-- | Helper function for trying out days in ghci.
+runDay :: Day -> FilePath -> IO ()
+runDay (DayPure _ f) _ = f
+runDay (DayFile _ f) p = f p
 
 dayPure :: String -> IO () -> Day
 dayPure = DayPure
