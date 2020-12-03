@@ -5,6 +5,7 @@ module Aoc.Y2020.D01
 import           Control.Monad
 
 import           Aoc.Day
+import           Aoc.Parse
 
 findPair :: [Integer] -> (Integer, Integer)
 findPair l = head $ do
@@ -21,10 +22,11 @@ findTriple l = head $ do
   guard $ a + b + c == 2020
   pure (a, b, c)
 
-solve202001 :: FilePath -> IO ()
-solve202001 f = do
-  values <- map read . lines <$> readFile f
+parser :: Parser [Integer]
+parser = manyLines decimal
 
+solver :: [Integer] -> IO ()
+solver values = do
   putStrLn ">> Part 1"
   let (x1, x2) = findPair values
   putStrLn $ show x1 ++ " * " ++ show x2 ++ " = " ++ show (x1 * x2)
@@ -34,4 +36,4 @@ solve202001 f = do
   putStrLn $ show y1 ++ " * " ++ show y2 ++ " * " ++ show y3 ++ " = " ++ show (y1 * y2 * y3)
 
 day :: Day
-day = dayFile "2020_01" solve202001
+day = dayParser "2020_01" parser solver
