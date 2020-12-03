@@ -1,5 +1,11 @@
 module Aoc.Y2020
-  ( solve202001
+  ( days
   ) where
 
-import Aoc.Y2020.A01
+import           Aoc.Day
+import qualified Aoc.Y2020.D01 as D01
+
+days :: [Day]
+days =
+  [ D01.day
+  ]

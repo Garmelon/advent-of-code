@@ -1,8 +1,10 @@
-module Aoc.Y2020.A01
-  ( solve202001
+module Aoc.Y2020.D01
+  ( day
   ) where
 
-import Control.Monad
+import           Control.Monad
+
+import           Aoc.Day
 
 findPair :: [Integer] -> (Integer, Integer)
 findPair l = head $ do
@@ -30,3 +32,6 @@ solve202001 f = do
   let (y1, y2, y3) = findTriple values
   putStrLn ">> Part 2"
   putStrLn $ show y1 ++ " * " ++ show y2 ++ " * " ++ show y3 ++ " = " ++ show (y1 * y2 * y3)
+
+day :: Day
+day = dayFile "2020_01" solve202001
