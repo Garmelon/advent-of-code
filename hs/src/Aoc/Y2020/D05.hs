@@ -15,8 +15,8 @@ data Pass = Pass
 
 parser :: Parser [Pass]
 parser = manyLines $ do
-  fbs <- sequenceA $ replicate 7 $ (False <$ char 'F') <|> (True <$ char 'B')
-  lrs <- sequenceA $ replicate 3 $ (False <$ char 'L') <|> (True <$ char 'R')
+  fbs <- count 7 $ (False <$ char 'F') <|> (True <$ char 'B')
+  lrs <- count 3 $ (False <$ char 'L') <|> (True <$ char 'R')
   pure Pass { fb = fbs, lr = lrs }
 
 calcNum :: [Bool] -> Int
@@ -25,23 +25,18 @@ calcNum bs = sum $ zipWith (*) (iterate (*2) 1) (map fromEnum $ reverse bs)
 seatId :: Pass -> Int
 seatId p = 8 * calcNum (fb p) + calcNum (lr p)
 
-cols :: [[Bool]]
-cols = sequenceA $ replicate 3 [False, True]
+allSeats :: [Pass]
+allSeats = Pass
+  <$> sequenceA (replicate 7 [False, True])
+  <*> sequenceA (replicate 3 [False, True])
 
-rows :: [[Bool]]
-rows = sequenceA $ replicate 7 [False, True]
-
-mySeats :: Set.Set Pass -> [Pass]
+mySeats :: Set.Set Int -> [Int]
 mySeats taken = do
-  col <- cols
-  (prevRow, row, nextRow) <- zip3 rows (drop 1 rows) (drop 2 rows)
-  let prevPass = Pass prevRow col
-      pass     = Pass row col
-      nextPass = Pass nextRow col
-  guard $ prevPass `Set.member` taken
-  guard $ not $ pass `Set.member` taken
-  guard $ nextPass `Set.member` taken
-  pure pass
+  sid <- seatId <$> allSeats
+  guard $ (sid - 1) `Set.member` taken
+  guard $ not $ sid `Set.member` taken
+  guard $ (sid + 1) `Set.member` taken
+  pure sid
 
 solver :: [Pass] -> IO ()
 solver ps = do
@@ -50,8 +45,8 @@ solver ps = do
 
   putStrLn ""
   putStrLn ">> Part 2"
-  let taken = Set.fromList ps
-  print $ map seatId $ mySeats taken
+  let taken = Set.fromList $ map seatId ps
+  print $ mySeats taken
 
 day :: Day
 day = dayParse "2020_05" parser solver
