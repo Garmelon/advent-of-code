@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes        #-}
 
 module Aoc.Y2020.D04
   ( day
@@ -6,8 +7,10 @@ module Aoc.Y2020.D04
 
 import           Control.Monad
 import           Data.Char
-import qualified Data.Text     as T
+import           Data.Functor
 import           Data.Void
+
+import qualified Data.Text     as T
 
 import           Aoc.Day
 import           Aoc.Parse
@@ -64,6 +67,9 @@ instance Semigroup Passport where
 instance Monoid Passport where
   mempty = Passport mempty mempty mempty mempty mempty mempty mempty mempty
 
+mapFieldsExceptCid :: (forall a. Field a -> b) -> Passport -> [b]
+mapFieldsExceptCid f p = [f $ byr p, f $ iyr p, f $ eyr p, f $ hgt p, f $ hcl p, f $ ecl p, f $ pid p]
+
 pField :: T.Text -> Parser a -> Parser (Field a)
 pField name p = do
   notFollowedBy oneSpace
@@ -102,7 +108,7 @@ pHgt :: Parser Passport
 pHgt = do
   f <- pField "hgt" $ do
     i <- decimal
-    (string "cm" >> guard (150 <= i && i <= 193) >> pure (Cm i)) <|> (string "in" >> guard (59 <= i && i <= 76) >> pure (In i))
+    (string "cm" *> guard (150 <= i && i <= 193) $> Cm i) <|> (string "in" *> guard (59 <= i && i <= 76) $> In i)
   pure mempty{hgt = f}
 
 pHcl :: Parser Passport
@@ -136,26 +142,10 @@ parser = passport `sepBy` newline
     field = pByr <|> pIyr <|> pEyr <|> pHgt <|> pHcl <|> pEcl <|> pPid <|> pCid
 
 hasRequiredKeys :: Passport -> Bool
-hasRequiredKeys p = and
-  [ isPresent $ byr p
-  , isPresent $ iyr p
-  , isPresent $ eyr p
-  , isPresent $ hgt p
-  , isPresent $ hcl p
-  , isPresent $ ecl p
-  , isPresent $ pid p
-  ]
+hasRequiredKeys = and . mapFieldsExceptCid isPresent
 
 hasValidKeys :: Passport -> Bool
-hasValidKeys p = and
-  [ isValid $ byr p
-  , isValid $ iyr p
-  , isValid $ eyr p
-  , isValid $ hgt p
-  , isValid $ hcl p
-  , isValid $ ecl p
-  , isValid $ pid p
-  ]
+hasValidKeys = and . mapFieldsExceptCid isValid
 
 solver :: [Passport] -> IO ()
 solver passports = do
