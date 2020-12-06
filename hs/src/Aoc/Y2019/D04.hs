@@ -1,6 +1,9 @@
-module Aoc.Y2019.A04
-  ( solve201904
+module Aoc.Y2019.D04
+  ( day
   ) where
+
+import           Aoc.Day
+import           Aoc.Parse
 
 type Passwd = (Int, Int, Int, Int, Int, Int)
 
@@ -17,9 +20,6 @@ passwds = do
 getRange :: Passwd -> Passwd -> [Passwd]
 getRange lowerBound upperBound = takeWhile (<=upperBound) $ dropWhile (<lowerBound) passwds
 
-passwdsInRange :: [Passwd]
-passwdsInRange = getRange (1,3,6,8,1,8) (6,8,5,9,7,9)
-
 seqDigits :: Passwd -> Bool
 seqDigits (a, b, c, d, e, f) = or $ zipWith (==) [a,b,c,d,e] [b,c,d,e,f]
 
@@ -30,10 +30,19 @@ sepSeqDigits (a, b, c, d, e, f) =
       rightEdge = zipWith (/=) [b,c,d,e,f] [c,d,e,f,0]
   in  or $ zipWith3 (\x y z -> x && y && z) leftEdge pair rightEdge
 
-solve201904 :: FilePath -> IO ()
-solve201904 _ = do
-  putStrLn ">> Part 1"
-  print $ length $ filter seqDigits passwdsInRange
+parser :: Parser (Passwd, Passwd)
+parser = (,) <$> (pPasswd <* char '-') <*> (pPasswd <* newline)
+  where
+    pPasswd = (,,,,,) <$> digit <*> digit <*> digit <*> digit <*> digit <*> digit
 
+solver :: (Passwd, Passwd) -> IO ()
+solver (low, high) = do
+  putStrLn ">> Part 1"
+  print $ length $ filter seqDigits $ getRange low high
+
+  putStrLn ""
   putStrLn ">> Part 2"
-  print $ length $ filter sepSeqDigits passwdsInRange
+  print $ length $ filter sepSeqDigits $ getRange low high
+
+day :: Day
+day = dayParse parser solver

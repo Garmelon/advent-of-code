@@ -8,6 +8,7 @@ module Aoc.Parse
   , untilSpace
   , untilEol
   , lineChar
+  , digit
   ) where
 
 import           Data.Char
@@ -39,3 +40,17 @@ untilEol = takeWhileP (Just "non-newline character") (/= '\n')
 
 lineChar :: Parser Char
 lineChar = label "non-newline character" $ satisfy (/= '\n')
+
+digit :: Num a => Parser a
+digit = foldr1 (<|>)
+  [ 0 <$ char '0'
+  , 1 <$ char '1'
+  , 2 <$ char '2'
+  , 3 <$ char '3'
+  , 4 <$ char '4'
+  , 5 <$ char '5'
+  , 6 <$ char '6'
+  , 7 <$ char '7'
+  , 8 <$ char '8'
+  , 9 <$ char '9'
+  ]
