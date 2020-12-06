@@ -14,7 +14,10 @@ import           Data.Char
 import           Data.Void
 
 import qualified Data.Text                  as T
-import           Text.Megaparsec
+import           Text.Megaparsec            hiding (InvalidPosException, Pos,
+                                             PosState, SourcePos, State,
+                                             defaultTabWidth, initialPos, mkPos,
+                                             pos1, sourcePosPretty, unPos)
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer (binary, decimal, float,
                                              hexadecimal, octal, scientific,

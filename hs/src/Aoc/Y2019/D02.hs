@@ -6,15 +6,17 @@
 -- day requires an intcode machine, instead of maintaining a single global
 -- intcode machine implementation.
 
-module Aoc.Y2019.A02
-  ( solve201902
+module Aoc.Y2019.D02
+  ( day
   ) where
 
-import Control.Monad
-import Data.Foldable
+import           Control.Monad
+import           Data.Foldable
+
 import qualified Data.Map.Strict as M
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
+
+import           Aoc.Day
+import           Aoc.Parse
 
 newtype Memory = Memory { unmemory :: M.Map Int Int }
 
@@ -53,7 +55,7 @@ data StepError
 readAt :: State -> Int -> Either StepError Int
 readAt s i = case readMem i $ stateMem s of
   Nothing -> Left $ CouldNotRead i
-  Just v -> Right v
+  Just v  -> Right v
 
 writeAt :: Int -> Int -> State -> State
 writeAt addr val s = s{stateMem = writeMem addr val $ stateMem s}
@@ -63,10 +65,10 @@ step s = do
   let idx = stateIdx s
   opcode <- readAt s idx
   case opcode of
-    1 -> increaseIdx <$> opcodeWith (+) s
-    2 -> increaseIdx <$> opcodeWith (*) s
+    1  -> increaseIdx <$> opcodeWith (+) s
+    2  -> increaseIdx <$> opcodeWith (*) s
     99 -> Left Exited
-    _ -> Left $ UnknownOpcode idx opcode
+    _  -> Left $ UnknownOpcode idx opcode
 
 opcodeWith :: (Int -> Int -> Int) -> State -> Either StepError State
 opcodeWith f s = do
@@ -80,21 +82,22 @@ opcodeWith f s = do
 
 run :: State -> (State, StepError)
 run s = case step s of
-  Left e -> (s, e)
+  Left e   -> (s, e)
   Right s' -> run s'
 
 patch :: Int -> Int -> Memory -> Memory
 patch noun verb = writeMem 2 verb . writeMem 1 noun
 
-solve201902 :: FilePath -> IO ()
-solve201902 f = do
-  values <- map (read . T.unpack) . T.splitOn "," <$> T.readFile f
-  let mem = newMem values
+parser :: Parser Memory
+parser = newMem <$> (decimal `sepBy` char ',') <* newline
 
+solver :: Memory -> IO ()
+solver mem = do
   putStrLn ">> Part 1"
   let (s1, _) = run $ newState $ patch 12 2 mem
   putStrLn $ "Value at position 0: " <> show (readMem 0 $ stateMem s1)
 
+  putStrLn ""
   putStrLn ">> Part 2"
   let attempts = [(noun, verb) | noun <- [0..99], verb <- [0..99]]
   for_ attempts $ \(noun, verb) -> do
@@ -102,3 +105,6 @@ solve201902 f = do
         Just result = readMem 0 $ stateMem s2
     when (result == 19690720) $
       putStrLn $ "100 * noun + verb = " <> show (100 * noun + verb)
+
+day :: Day
+day = dayParse parser solver
