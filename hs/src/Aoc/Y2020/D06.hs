@@ -10,7 +10,7 @@ import           Aoc.Parse
 type Group = [String]
 
 parser :: Parser [Group]
-parser = sepBy (endBy1 (some lowerChar) newline) newline
+parser = (some lowerChar `endBy1` newline) `sepBy` newline
 
 solver :: [Group] -> IO ()
 solver groups = do
