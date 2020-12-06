@@ -27,6 +27,12 @@ newtype Addr = Addr Integer
 newtype Value = Value Integer
   deriving (Show, Eq, Ord, Enum, Num, Real, Integral)
 
+valToAddr :: Value -> Addr
+valToAddr = fromIntegral
+
+offsetAddr :: Addr -> Int -> Addr
+offsetAddr a i = a + fromIntegral i
+
 data StepError
   = Halted State
   | CouldNotRead Addr
@@ -105,15 +111,19 @@ data Operand = Direct Value | Indirect Addr
   deriving (Show)
 
 pmToOp :: ParamMode -> Value -> Operand
-pmToOp PositionMode  = Indirect . fromIntegral
+pmToOp PositionMode  = Indirect . valToAddr
 pmToOp ImmediateMode = Direct
 
 data Opcode
-  = OpAdd Operand Operand Addr
-  | OpMul Operand Operand Addr
-  | OpInput Addr
-  | OpOutput Operand
-  | OpHalt
+  = OpAdd Operand Operand Addr      -- 1
+  | OpMul Operand Operand Addr      -- 2
+  | OpInput Addr                    -- 3
+  | OpOutput Operand                -- 4
+  | OpJumpIfTrue Operand Operand    -- 5
+  | OpJumpIfFalse Operand Operand   -- 6
+  | OpLessThan Operand Operand Addr -- 7
+  | OpEquals Operand Operand Addr   -- 8
+  | OpHalt                          -- 99
   deriving (Show)
 
 --------------
@@ -125,11 +135,11 @@ data Opcode
 getOp :: State -> Addr -> [ParamMode] -> Int -> StepM Operand
 getOp s a pms i = do
   let pm = pms !! i
-  value <- readAt s $ a + 1 + fromIntegral i
+  value <- readAt s $ offsetAddr a $ 1 + i
   pure $ pmToOp pm value
 
 getAddr :: State -> Addr -> Int -> StepM Addr
-getAddr s a i = fromIntegral <$> readAt s (a + 1 + fromIntegral i)
+getAddr s a i = valToAddr <$> readAt s (offsetAddr a $ 1 + i)
 
 parseOpcode :: State -> StepM Opcode
 parseOpcode s = do
@@ -137,11 +147,17 @@ parseOpcode s = do
   value <- toInteger <$> readAt s a
   let opcode = value `mod` 100
       pms = paramModes $ value `div` 100
+      getOp' = getOp s a pms
+      getAddr' = getAddr s a
   case opcode of
-     1  -> OpAdd <$> getOp s a pms 0 <*> getOp s a pms 1 <*> getAddr s a 2
-     2  -> OpMul <$> getOp s a pms 0 <*> getOp s a pms 1 <*> getAddr s a 2
-     3  -> OpInput <$> getAddr s a 0
-     4  -> OpOutput <$> getOp s a pms 0
+     1  -> OpAdd         <$> getOp'   0 <*> getOp' 1 <*> getAddr' 2
+     2  -> OpMul         <$> getOp'   0 <*> getOp' 1 <*> getAddr' 2
+     3  -> OpInput       <$> getAddr' 0
+     4  -> OpOutput      <$> getOp'   0
+     5  -> OpJumpIfTrue  <$> getOp'   0 <*> getOp' 1
+     6  -> OpJumpIfFalse <$> getOp'   0 <*> getOp' 1
+     7  -> OpLessThan    <$> getOp'   0 <*> getOp' 1 <*> getAddr' 2
+     8  -> OpEquals      <$> getOp'   0 <*> getOp' 1 <*> getAddr' 2
      99 -> pure OpHalt
      _  -> Left $ UnknownOpcode a opcode
 
@@ -150,28 +166,42 @@ parseOpcode s = do
 data StepResult
   = NormalStep State
   | InputStep (Integer -> State)
-  | OutputStep State Integer
+  | OutputStep Integer State
 
 readOp :: State -> Operand -> StepM Value
 readOp _ (Direct v)   = pure v
 readOp s (Indirect a) = readAt s a
 
 incIdx :: Int -> State -> State
-incIdx i s = s{stateIdx = stateIdx s + fromIntegral i}
+incIdx i s = s{stateIdx = offsetAddr (stateIdx s) i}
+
+setIdx :: Addr -> State -> State
+setIdx i s = s{stateIdx = i}
+
+binaryOp :: State -> Operand -> Operand -> Addr -> Int -> (Value -> Value -> Value) -> StepM StepResult
+binaryOp s x y r i f = do
+  vx <- readOp s x
+  vy <- readOp s y
+  pure $ NormalStep $ incIdx i $ writeAt s r $ f vx vy
+
+jumpOp :: State -> Operand -> Operand -> Int -> (Value -> Bool) -> StepM StepResult
+jumpOp s x t i f = do
+  vx <- readOp s x
+  NormalStep <$> if f vx
+    then flip setIdx s . valToAddr <$> readOp s t
+    else pure $ incIdx i s
 
 execOpcode :: State -> Opcode -> StepM StepResult
-execOpcode s (OpAdd x y r) = do
-  vx <- readOp s x
-  vy <- readOp s y
-  pure $ NormalStep $ incIdx 4 $ writeAt s r $ vx + vy
-execOpcode s (OpMul x y r) = do
-  vx <- readOp s x
-  vy <- readOp s y
-  pure $ NormalStep $ incIdx 4 $ writeAt s r $ vx * vy
+execOpcode s (OpAdd x y r) = binaryOp s x y r 4 (+)
+execOpcode s (OpMul x y r) = binaryOp s x y r 4 (*)
 execOpcode s (OpInput r) = pure $ InputStep $ incIdx 2 . writeAt s r . fromInteger
 execOpcode s (OpOutput x) = do
   vx <- readOp s x
-  pure $ OutputStep (incIdx 2 s) $ toInteger vx
+  pure $ OutputStep (toInteger vx) $ incIdx 2 s
+execOpcode s (OpJumpIfTrue x t) = jumpOp s x t 3 (/= 0)
+execOpcode s (OpJumpIfFalse x t) = jumpOp s x t 3 (== 0)
+execOpcode s (OpLessThan x y r) = binaryOp s x y r 4 $ \a b -> if a < b then 1 else 0
+execOpcode s (OpEquals x y r) = binaryOp s x y r 4 $ \a b -> if a == b then 1 else 0
 execOpcode s OpHalt = Left $ Halted s
 
 step :: State -> Either StepError StepResult
@@ -187,7 +217,7 @@ run s = case step s of
     case readMaybe $ T.unpack t of
       Nothing -> pure $ InvalidInput t
       Just i  -> run $ f i
-  Right (OutputStep s' o) -> do
+  Right (OutputStep o s') -> do
     putStrLn $ "-> " ++ show o
     run s'
 
@@ -202,10 +232,13 @@ parser = newMem <$> (signed (pure ()) decimal `sepBy` char ',') <* newline
 solver :: Memory -> IO ()
 solver mem = do
   putStrLn ">> Part 1"
+  putStrLn "Input: 1"
   runAndPrintResult $ newState mem
 
   putStrLn ""
   putStrLn ">> Part 2"
+  putStrLn "Input: 5"
+  runAndPrintResult $ newState mem
 
 day :: Day
 day = dayParse parser solver
