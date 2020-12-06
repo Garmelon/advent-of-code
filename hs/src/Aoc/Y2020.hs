@@ -8,6 +8,7 @@ import qualified Aoc.Y2020.D02 as D02
 import qualified Aoc.Y2020.D03 as D03
 import qualified Aoc.Y2020.D04 as D04
 import qualified Aoc.Y2020.D05 as D05
+import qualified Aoc.Y2020.D06 as D06
 
 days :: [Day]
 days =
@@ -16,4 +17,5 @@ days =
   , D03.day
   , D04.day
   , D05.day
+  , D06.day
   ]
