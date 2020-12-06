@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Aoc.Y2019.A03
-  ( solve201903
+module Aoc.Y2019.D03
+  ( day
   ) where
 
 import           Data.List
-import           Data.Maybe
+
 import qualified Data.Map.Strict as M
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import           Text.Read (readMaybe)
+
+import           Aoc.Day
+import           Aoc.Parse
 
 data Pos = Pos Int Int
   deriving (Show, Eq, Ord)
@@ -51,30 +51,25 @@ intersections s1 s2 =
       costs2 = costs $ steps zeroPos s2
   in  M.toList $ M.intersectionWith (+) costs1 costs2
 
--- Reading input
+parser :: Parser ([Step], [Step])
+parser = do
+  s1 <- (pStep `sepBy` char ',') <* newline
+  s2 <- (pStep `sepBy` char ',') <* newline
+  pure (s1, s2)
+  where
+    pStep = Step <$> pDir <*> decimal
+    pDir = (U <$ char 'U') <|> (D <$ char 'D') <|> (L <$ char 'L') <|> (R <$ char 'R')
 
-readDir :: Char -> Maybe Dir
-readDir 'U' = Just U
-readDir 'D' = Just D
-readDir 'L' = Just L
-readDir 'R' = Just R
-readDir _ = Nothing
-
-readStep :: String -> Maybe Step
-readStep [] = Nothing
-readStep (d:n) = Step <$> readDir d <*> readMaybe n
-
-readSteps :: T.Text -> Maybe [Step]
-readSteps = traverse (readStep . T.unpack) . T.splitOn ","
-
-solve201903 :: FilePath -> IO ()
-solve201903 f = do
-  text <- T.readFile f
-  let [steps1, steps2] = mapMaybe readSteps $ T.lines text
-      ixs = intersections steps1 steps2
+solver :: ([Step], [Step]) -> IO ()
+solver (steps1, steps2) = do
+  let ixs = intersections steps1 steps2
 
   putStrLn ">> Part 1"
   print $ manhattan $ fst $ head $ sortOn (manhattan . fst) ixs
 
+  putStrLn ""
   putStrLn ">> Part 2"
   print $ snd $ head $ sortOn snd ixs
+
+day :: Day
+day = dayParse parser solver
