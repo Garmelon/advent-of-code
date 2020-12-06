@@ -5,6 +5,7 @@ import           Control.Monad
 import           Options.Applicative
 
 import           Aoc.Day             (Day (..), Year (..))
+import qualified Aoc.Y2019           as Y2019
 import qualified Aoc.Y2020           as Y2020
 
 lpad :: a -> Int -> [a] -> [a]
@@ -28,7 +29,8 @@ dayToParser (DayFile f) = f <$> strArgument (metavar "INPUTFILE")
 
 parser :: Parser (IO ())
 parser = yearsToParser
-  [ Y2020.year
+  [ Y2019.year
+  , Y2020.year
   ]
 
 opts :: ParserInfo (IO ())

@@ -1,8 +1,11 @@
 module Aoc.Y2019
-  ( days
+  ( year
   ) where
 
 import           Aoc.Day
+import qualified Aoc.Y2019.D01 as D01
 
-days :: [Day]
-days = []
+year :: Year
+year = Year 2019
+  [ ( 1, D01.day)
+  ]
