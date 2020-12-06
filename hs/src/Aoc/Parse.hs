@@ -8,6 +8,7 @@ module Aoc.Parse
   , untilSpace
   , untilEol
   , lineChar
+  , word
   , digit
   ) where
 
@@ -40,6 +41,9 @@ untilEol = takeWhileP (Just "non-newline character") (/= '\n')
 
 lineChar :: Parser Char
 lineChar = label "non-newline character" $ satisfy (/= '\n')
+
+word :: Parser T.Text
+word = takeWhileP (Just "alphanumeric character") isAlphaNum
 
 digit :: Num a => Parser a
 digit = foldr1 (<|>)
