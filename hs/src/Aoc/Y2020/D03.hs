@@ -44,4 +44,4 @@ solver trees = do
   putStrLn $ "Product: " ++ show (oneOne * threeOne * fiveOne * sevenOne * oneTwo)
 
 day :: Day
-day = dayParse "2020_03" parser solver
+day = dayParse parser solver

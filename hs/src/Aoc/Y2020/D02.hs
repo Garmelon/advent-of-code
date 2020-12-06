@@ -42,4 +42,4 @@ solver ls = do
   print $ length $ filter validPositions ls
 
 day :: Day
-day = dayParse "2020_02" parser solver
+day = dayParse parser solver

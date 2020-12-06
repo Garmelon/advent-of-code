@@ -1,5 +1,5 @@
 module Aoc.Y2020
-  ( days
+  ( year
   ) where
 
 import           Aoc.Day
@@ -10,12 +10,12 @@ import qualified Aoc.Y2020.D04 as D04
 import qualified Aoc.Y2020.D05 as D05
 import qualified Aoc.Y2020.D06 as D06
 
-days :: [Day]
-days =
-  [ D01.day
-  , D02.day
-  , D03.day
-  , D04.day
-  , D05.day
-  , D06.day
+year :: Year
+year = Year 2020
+  [ ( 1, D01.day)
+  , ( 2, D02.day)
+  , ( 3, D03.day)
+  , ( 4, D04.day)
+  , ( 5, D05.day)
+  , ( 6, D06.day)
   ]

@@ -157,4 +157,4 @@ solver passports = do
   print $ length $ filter hasValidKeys passports
 
 day :: Day
-day = dayParse "2020_04" parser solver
+day = dayParse parser solver

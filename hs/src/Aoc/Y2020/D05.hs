@@ -40,4 +40,4 @@ solver ps = do
   print $ mySeats $ Set.fromList ps
 
 day :: Day
-day = dayParse "2020_05" parser solver
+day = dayParse parser solver

@@ -1,5 +1,6 @@
 module Aoc.Day
-  ( Day(..)
+  ( Year(..)
+  , Day(..)
   , runDay
   , dayPure
   , dayFile
@@ -16,29 +17,34 @@ import           Text.Megaparsec
 
 import           Aoc.Parse
 
+data Year = Year
+  { yNum  :: Int
+  , yDays :: [(Int, Day)]
+  }
+
 data Day
-  = DayPure String (IO ())
-  | DayFile String (FilePath -> IO ())
+  = DayPure (IO ())
+  | DayFile (FilePath -> IO ())
 
 -- | Helper function for trying out days in ghci.
 runDay :: Day -> FilePath -> IO ()
-runDay (DayPure _ f) _ = f
-runDay (DayFile _ f) p = f p
+runDay (DayPure f) _ = f
+runDay (DayFile f) p = f p
 
-dayPure :: String -> IO () -> Day
+dayPure :: IO () -> Day
 dayPure = DayPure
 
-dayFile :: String -> (FilePath -> IO ()) -> Day
+dayFile :: (FilePath -> IO ()) -> Day
 dayFile = DayFile
 
-dayString :: String -> (String -> IO ()) -> Day
-dayString name f = dayFile name $ f <=< readFile
+dayString :: (String -> IO ()) -> Day
+dayString f = dayFile $ f <=< readFile
 
-dayText :: String -> (T.Text -> IO ()) -> Day
-dayText name f = dayFile name $ f <=< T.readFile
+dayText :: (T.Text -> IO ()) -> Day
+dayText f = dayFile $ f <=< T.readFile
 
-dayParse :: String -> Parser a -> (a -> IO ()) -> Day
-dayParse name p f = dayFile name $ \path -> do
+dayParse :: Parser a -> (a -> IO ()) -> Day
+dayParse p f = dayFile $ \path -> do
   text <- T.readFile path
   case parse (p <* eof) path text of
     Right a -> f a

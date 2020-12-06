@@ -22,4 +22,4 @@ solver groups = do
   print $ sum $ map (Set.size . foldr1 Set.intersection . map Set.fromList) groups
 
 day :: Day
-day = dayParse "2020_06" parser solver
+day = dayParse parser solver

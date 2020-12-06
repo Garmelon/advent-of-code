@@ -37,4 +37,4 @@ solver values = do
   putStrLn $ show y1 ++ " * " ++ show y2 ++ " * " ++ show y3 ++ " = " ++ show (y1 * y2 * y3)
 
 day :: Day
-day = dayParse "2020_01" parser solver
+day = dayParse parser solver
