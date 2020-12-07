@@ -7,6 +7,7 @@ dependencies:
 - megaparsec
 - optparse-applicative
 - text
+- transformers
 
 library:
   source-dirs: src
