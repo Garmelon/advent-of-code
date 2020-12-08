@@ -4,8 +4,16 @@ module Aoc.Y2020.D08
   ( day
   ) where
 
-import qualified Data.Map  as Map
-import qualified Data.Set  as Set
+import           Control.Applicative
+import           Control.Monad
+import           Data.Functor
+import           Data.Maybe
+
+import           Control.Monad.Trans.Class
+import           Control.Monad.Trans.Except
+import           Control.Monad.Trans.State
+import qualified Data.Map                   as Map
+import qualified Data.Set                   as Set
 
 import           Aoc.Day
 import           Aoc.Parse
@@ -21,52 +29,90 @@ parser = manyLines $ Instr <$> (pOpcode <* char ' ') <*> signed (pure ()) decima
   where
     pOpcode =  (Acc <$ string "acc") <|> (Jmp <$ string "jmp") <|> (Nop <$ string "nop")
 
-data State = State
-  { sInstrs :: Map.Map Int Instr
-  , sIdx    :: Int
-  , sAcc    :: Int
+data Machine = Machine
+  { mInstrs  :: Map.Map Int Instr
+  , mHaltIdx :: Int
+  , mVisited :: Set.Set Int
+  , mIdx     :: Int
+  , mAcc     :: Int
   } deriving (Show)
 
-newState :: [Instr] -> State
-newState instrs = State (Map.fromList $ zip [0..] instrs) 0 0
+newMachine :: [Instr] -> Machine
+newMachine instrs = Machine
+  { mInstrs = Map.fromList $ zip [0..] instrs
+  , mHaltIdx = length instrs
+  , mVisited = Set.empty
+  , mIdx = 0
+  , mAcc = 0
+  }
 
-incIdx :: Int -> State -> State
-incIdx delta s = s { sIdx = delta + sIdx s }
+data StepError
+  = InvalidIdx Int
+  | DuplicatedIdx Int
+  | Halted
+  deriving (Show, Eq)
 
-incAcc :: Int -> State -> State
-incAcc delta s = s { sAcc = delta + sAcc s }
+type RunM = ExceptT StepError (State Machine)
 
-step :: State -> Maybe State
-step s = do
-  (Instr op val) <- sInstrs s Map.!? sIdx s
-  pure $ case op of
-    Acc -> incIdx 1 $ incAcc val s
-    Jmp -> incIdx val s
-    Nop -> incIdx 1 s
+visit :: Int -> RunM ()
+visit idx = lift $ modify $ \m -> m { mVisited = Set.insert idx $ mVisited m }
 
-run :: State -> [State]
-run s = s : case step s of
-  Nothing -> []
-  Just s' -> run s'
+incIdx :: Int -> RunM ()
+incIdx delta = lift $ modify $ \m -> m { mIdx = delta + mIdx m }
 
-untilRepeatingIdx :: [State] -> [State]
-untilRepeatingIdx = helper Set.empty
-  where
-    helper _ [] = []
-    helper idxs (s:ss)
-      | i `Set.member` idxs = []
-      | otherwise           = s : helper (Set.insert i idxs) ss
-      where i = sIdx s
+incAcc :: Int -> RunM ()
+incAcc delta = lift $ modify $ \m -> m { mAcc = delta + mAcc m}
+
+getInstr :: RunM Instr
+getInstr = do
+  m <- lift get
+  let idx = mIdx m
+  when (idx == mHaltIdx m) $ throwE Halted
+  when (idx `Set.member` mVisited m) $ throwE $ DuplicatedIdx idx
+  case mInstrs m Map.!? idx of
+    Nothing    -> throwE $ InvalidIdx idx
+    Just instr -> visit idx $> instr
+
+step :: RunM ()
+step = do
+  (Instr op val) <- getInstr
+  case op of
+    Acc -> incAcc val *> incIdx 1
+    Jmp -> incIdx val
+    Nop -> incIdx 1
+
+run :: Machine -> (Machine, StepError)
+run m = case runState (runExceptT (forever step)) m of
+  (Left e, m') -> (m', e)
+  (Right _, _) -> error "infinite loop was not infinite"
+
+variations :: Machine -> [Machine]
+variations m = do
+  let instrs = mInstrs m
+      maxIdx = maximum $ Map.keys instrs
+  idx <- [0 .. maxIdx - 1]
+  (Instr op val) <- maybeToList $ instrs Map.!? idx
+  newOp <- case op of
+    Acc -> []
+    Jmp -> pure Nop
+    Nop -> pure Jmp
+  let newInstrs = Map.insert idx (Instr newOp val) instrs
+  pure m { mInstrs = newInstrs}
 
 solver :: [Instr] -> IO ()
 solver instrs = do
-  let s = newState instrs
+  let m = newMachine instrs
 
   putStrLn ">> Part 1"
-  print $ sAcc $ last $ untilRepeatingIdx $ run s
+  let (m1, e1) = run m
+  print e1
+  print $ mAcc m1
 
   putStrLn ""
   putStrLn ">> Part 2"
+  let m2 = head [m' | (m', Halted) <- run <$> variations m]
+  print Halted
+  print $ mAcc m2
 
 day :: Day
 day = dayParse parser solver
