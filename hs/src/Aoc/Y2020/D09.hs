@@ -31,31 +31,19 @@ isValid nums n = not $ null $ do
   guard $ a + b == n
   pure ()
 
-data State = State
-  { sTarget :: Int
-  , sSeq    :: Seq.Seq Int
-  , sSum    :: Int
-  , sRest   :: [Int]
-  } deriving (Show)
-
-newState :: Int -> [Int] -> State
-newState target = State target Seq.empty 0
-
-step :: State -> Either (Maybe [Int]) State
-step s@State{..} = case compare sSum sTarget of
-  EQ -> Left $ Just $ toList sSeq
-  GT -> case Seq.viewl sSeq of
-    Seq.EmptyL  -> Left Nothing -- Should only happen if sTarget is negative
-    l Seq.:< ls -> Right s{ sSeq = ls, sSum = sSum - l }
-  LT -> case sRest of
-    []     -> Left Nothing -- Can happen if no sequence of correct sum is found
-    (r:rs) -> Right s{ sSeq = sSeq Seq.|> r, sSum = sSum + r, sRest = rs }
-
-untilLeft :: (b -> Either a b) -> b -> a
-untilLeft f a = either id (untilLeft f) $ f a
-
+-- Only works if all numbers are positive.
 findRange :: Int -> [Int] -> Maybe [Int]
-findRange target nums = untilLeft step $ newState target nums
+findRange target = helper 0 Seq.empty
+  where
+    helper :: Int -> Seq.Seq Int -> [Int] -> Maybe [Int]
+    helper sectionSum section rest = case compare sectionSum target of
+      EQ -> Just $ toList section
+      GT -> case Seq.viewl section of
+        Seq.EmptyL  -> Nothing -- Should only happen if sTarget is negative
+        l Seq.:< ls -> helper (sectionSum - l) ls rest
+      LT -> case rest of
+        []     -> Nothing -- Can happen if no sequence of correct sum is found
+        (r:rs) -> helper (sectionSum + r) (section Seq.|> r) rs
 
 solver :: [Int] -> IO ()
 solver nums = do
