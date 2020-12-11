@@ -1,5 +1,3 @@
-{-# LANGUAGE TupleSections #-}
-
 module Aoc.Y2020.D11
   ( day
   ) where
@@ -11,64 +9,63 @@ import qualified Data.Map.Strict as Map
 import           Aoc.Day
 import           Aoc.Parse
 
-data Seat = Empty | Occupied
-  deriving (Show, Eq)
-
-isOccupied :: Seat -> Bool
-isOccupied Occupied = True
-isOccupied Empty    = False
+type Pos = (Int, Int)
 
 data Field = Field
-  { fMap  :: Map.Map (Int, Int) Seat
-  , fSize :: (Int, Int)
+  { fMap  :: Map.Map Pos Bool
+  , fSize :: Pos
   } deriving (Show, Eq)
 
 parser :: Parser Field
 parser = do
-  ls <- manyLines $ many pSeat
+  ls <- manyLines $ many $ (Nothing <$ char '.') <|> (Just False <$ char 'L')
   let dims = (length $ head ls, length ls)
-      lsWithCoords = concat $ zipWith (\y -> zipWith (\x -> ((x, y),)) [0..]) [0..] ls
-      m = Map.fromList [(xy, s) | (xy, Just s) <- lsWithCoords]
+      lsWithCoords = concat $ zipWith (\y -> zipWith (\x -> (,) (x, y)) [0..]) [0..] ls
+      m = Map.fromList [(pos, s) | (pos, Just s) <- lsWithCoords]
   pure $ Field m dims
-  where
-    pSeat = (Nothing <$ char '.') <|> (Just Empty <$ char 'L')
 
-step :: (Field -> (Int, Int) -> Seat -> Seat) -> Field -> Field
-step f field = field { fMap = m' }
-  where
-    m' = Map.fromList $ map (\(xy, s) -> (xy, f field xy s)) $ Map.toList $ fMap field
+step :: (Field -> Pos -> Bool -> Bool) -> Field -> Field
+step f field = field { fMap = Map.mapWithKey (f field) $ fMap field }
 
-stepSeatP1 :: Field -> (Int, Int) -> Seat -> Seat
-stepSeatP1 field (x, y) s
-  | s == Empty    && occupied == 0 = Occupied
-  | s == Occupied && occupied >= 4 = Empty
-  | otherwise                      = s
-  where
-    adjacent = mapMaybe (fMap field Map.!?) $ filter (/= (x, y)) $ (,) <$> [x-1,x,x+1] <*> [y-1,y,y+1]
-    occupied = length $ filter isOccupied adjacent
+add :: Pos -> Pos -> Pos
+add (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
 
-potAdjacent :: Field -> (Int, Int) -> [[(Int, Int)]]
-potAdjacent field xy = map towards [(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
+directions :: [Pos]
+directions = [(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
+
+countOccupied :: [Bool] -> Int
+countOccupied = length . filter id
+
+stepSeatP1 :: Field -> Pos -> Bool -> Bool
+stepSeatP1 field pos s
+  | not s && occupied == 0 = True
+  | s     && occupied >= 4 = False
+  | otherwise              = s
+  where
+    occupied = countOccupied $ mapMaybe ((fMap field Map.!?) . add pos) directions
+
+potentialAdjacent :: Field -> Pos -> [[Pos]]
+potentialAdjacent field pos = map towards directions
   where
     (mx, my) = fSize field
-    towards (dx, dy)
+    towards delta
       = takeWhile (\(x, y) -> 0 <= x && x < mx && 0 <= y && y < my)
       $ drop 1
-      $ iterate (\(x, y) -> (x + dx, y + dy)) xy
+      $ iterate (add delta) pos
 
 firstJust :: [Maybe a] -> Maybe a
-firstJust []             = Nothing
-firstJust (Just a  : _)  = Just a
-firstJust (Nothing : as) = firstJust as
+firstJust = foldr (<|>) Nothing
 
-stepSeatP2 :: Field -> (Int, Int) -> Seat -> Seat
-stepSeatP2 field xy s
-  | s == Empty    && occupied == 0 = Occupied
-  | s == Occupied && occupied >= 5 = Empty
-  | otherwise                      = s
+stepSeatP2 :: Field -> Pos -> Bool -> Bool
+stepSeatP2 field pos s
+  | not s && occupied == 0 = True
+  | s     && occupied >= 5 = False
+  | otherwise              = s
   where
-    adjacent = mapMaybe (firstJust . map (fMap field Map.!?)) $ potAdjacent field xy
-    occupied = length $ filter isOccupied adjacent
+    occupied
+      = countOccupied
+      $ mapMaybe (firstJust . map (fMap field Map.!?))
+      $ potentialAdjacent field pos
 
 iterateUntilSettled :: (Eq a) => (a -> a) -> a -> a
 iterateUntilSettled f a
@@ -80,13 +77,11 @@ iterateUntilSettled f a
 solver :: Field -> IO ()
 solver field = do
   putStrLn ">> Part 1"
-  let field1 = iterateUntilSettled (step stepSeatP1) field
-  print $ length $ filter isOccupied $ Map.elems $ fMap field1
+  print $ countOccupied $ Map.elems $ fMap $ iterateUntilSettled (step stepSeatP1) field
 
   putStrLn ""
   putStrLn ">> Part 2"
-  let field2 = iterateUntilSettled (step stepSeatP2) field
-  print $ length $ filter isOccupied $ Map.elems $ fMap field2
+  print $ countOccupied $ Map.elems $ fMap $ iterateUntilSettled (step stepSeatP2) field
 
 day :: Day
 day = dayParse parser solver
