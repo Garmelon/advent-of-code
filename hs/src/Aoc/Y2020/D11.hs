@@ -4,8 +4,6 @@ module Aoc.Y2020.D11
   ( day
   ) where
 
-import           Control.Monad
-import           Data.Foldable
 import           Data.Maybe
 
 import qualified Data.Map.Strict as Map
@@ -79,35 +77,14 @@ iterateUntilSettled f a
   where
     a' = f a
 
-printField :: Field -> IO ()
-printField field = do
-  let (mx, my) = fSize field
-  for_ [0..my-1] $ \y -> do
-    for_ [0..mx-1] $ \x ->
-      printSeat $ fMap field Map.!? (x, y)
-    putStrLn ""
-  putStrLn ""
-  where
-    printSeat Nothing         = putStr "."
-    printSeat (Just Empty)    = putStr "L"
-    printSeat (Just Occupied) = putStr "#"
-
-printIterationsUntilSettled :: (Field -> Field) -> Field -> IO ()
-printIterationsUntilSettled f a = do
-  printField a
-  let a' = f a
-  unless (a == a') $ printIterationsUntilSettled f a'
-
 solver :: Field -> IO ()
 solver field = do
   putStrLn ">> Part 1"
-  printIterationsUntilSettled (step stepSeatP1) field
   let field1 = iterateUntilSettled (step stepSeatP1) field
   print $ length $ filter isOccupied $ Map.elems $ fMap field1
 
   putStrLn ""
   putStrLn ">> Part 2"
-  printIterationsUntilSettled (step stepSeatP2) field
   let field2 = iterateUntilSettled (step stepSeatP2) field
   print $ length $ filter isOccupied $ Map.elems $ fMap field2
 
