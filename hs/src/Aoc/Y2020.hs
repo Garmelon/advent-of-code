@@ -13,6 +13,7 @@ import qualified Aoc.Y2020.D07 as D07
 import qualified Aoc.Y2020.D08 as D08
 import qualified Aoc.Y2020.D09 as D09
 import qualified Aoc.Y2020.D10 as D10
+import qualified Aoc.Y2020.D11 as D11
 
 year :: Year
 year = Year 2020
@@ -26,4 +27,5 @@ year = Year 2020
   , ( 8, D08.day)
   , ( 9, D09.day)
   , (10, D10.day)
+  , (11, D11.day)
   ]
