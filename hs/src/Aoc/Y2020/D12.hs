@@ -10,16 +10,12 @@ import           Aoc.Day
 import           Aoc.Parse
 
 data Pos = Pos Int Int
-  deriving (Show)
-
 data Rot = RLeft | RRight | RFlip
-  deriving (Show)
 
 data Move
   = MTranslate Pos Int
   | MForward Int
   | MRotate Rot
-  deriving (Show)
 
 parser :: Parser [Move]
 parser = manyLines
@@ -51,33 +47,29 @@ rotate RRight (Pos x y) = Pos (-y)   x
 rotate RLeft  (Pos x y) = Pos   y  (-x)
 rotate RFlip  (Pos x y) = Pos (-x) (-y)
 
-data State1 = State1 Pos Pos -- Ship, direction
-  deriving (Show)
+data State = State Pos Pos -- Ship, direction/waypoint
 
-step1 :: Move -> State1 -> State1
-step1 (MTranslate dir steps) (State1 spos sdir) = State1 (add spos $ mul steps dir) sdir
-step1 (MForward steps)       (State1 spos sdir) = State1 (add spos $ mul steps sdir) sdir
-step1 (MRotate rot)          (State1 spos sdir) = State1 spos (rotate rot sdir)
+step1 :: Move -> State -> State
+step1 (MTranslate dir steps) (State spos sdir) = State (add spos $ mul steps dir) sdir
+step1 (MForward steps)       (State spos sdir) = State (add spos $ mul steps sdir) sdir
+step1 (MRotate rot)          (State spos sdir) = State spos (rotate rot sdir)
 
-data State2 = State2 Pos Pos -- Ship, waypoint
-  deriving (Show)
-
-step2 :: Move -> State2 -> State2
-step2 (MTranslate dir steps) (State2 spos wp) = State2 spos (add wp $ mul steps dir)
-step2 (MForward steps)       (State2 spos wp) = State2 (add spos $ mul steps wp) wp
-step2 (MRotate rot)          (State2 spos wp) = State2 spos (rotate rot wp)
+step2 :: Move -> State -> State
+step2 (MTranslate dir steps) (State spos wp) = State spos (add wp $ mul steps dir)
+step2 (MForward steps)       (State spos wp) = State (add spos $ mul steps wp) wp
+step2 (MRotate rot)          (State spos wp) = State spos (rotate rot wp)
 
 solver :: [Move] -> IO ()
 solver moves = do
   putStrLn ">> Part 1"
-  let initialState1 = State1 (Pos 0 0) (Pos 1 0)
-      (State1 pos1 _) = foldl' (flip step1) initialState1 moves
+  let initialState1 = State (Pos 0 0) (Pos 1 0)
+      (State pos1 _) = foldl' (flip step1) initialState1 moves
   print $ manhattan pos1
 
   putStrLn ""
   putStrLn ">> Part 2"
-  let initialState2 = State2 (Pos 0 0) (Pos 10 (-1))
-      (State2 pos2 _) = foldl' (flip step2) initialState2 moves
+  let initialState2 = State (Pos 0 0) (Pos 10 (-1))
+      (State pos2 _) = foldl' (flip step2) initialState2 moves
   print $ manhattan pos2
 
 day :: Day
