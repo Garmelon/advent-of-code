@@ -5,7 +5,6 @@ module Aoc.Y2020.D12
   ) where
 
 import           Data.Foldable
-import           Data.List
 
 import           Aoc.Day
 import           Aoc.Parse
@@ -13,14 +12,11 @@ import           Aoc.Parse
 data Pos = Pos Int Int
   deriving (Show)
 
-data Dir = North | East | South | West
-  deriving (Show)
-
 data Rot = RLeft | RRight | RFlip
   deriving (Show)
 
 data Move
-  = MTranslate Dir Int
+  = MTranslate Pos Int
   | MForward Int
   | MRotate Rot
   deriving (Show)
@@ -31,7 +27,11 @@ parser = manyLines
   <|> (MForward   <$> (char 'F' *> decimal))
   <|> (MRotate    <$> pRot)
   where
-    pDir = foldr1 (<|>) [North <$ char 'N', East <$ char 'E', South <$ char 'S', West <$ char 'W']
+    pDir = foldr1 (<|>) [ Pos   0 (-1) <$ char 'N'
+                        , Pos   1   0  <$ char 'E'
+                        , Pos   0   1  <$ char 'S'
+                        , Pos (-1)  0  <$ char 'W'
+                        ]
     pRot = foldr1 (<|>) [ RLeft  <$ (string "L90"  <|> string "R270")
                         , RRight <$ (string "L270" <|> string "R90")
                         , RFlip  <$ (string "L180" <|> string "R180")
@@ -40,45 +40,45 @@ parser = manyLines
 add :: Pos -> Pos -> Pos
 add (Pos x1 y1) (Pos x2 y2) = Pos (x1 + x2) (y1 + y2)
 
+mul :: Int -> Pos -> Pos
+mul a (Pos x y) = Pos (a * x) (a * y)
+
 manhattan :: Pos -> Int
 manhattan (Pos x y) = abs x + abs y
 
-dirToPos :: Dir -> Int -> Pos
-dirToPos North d = Pos   0 (-d)
-dirToPos East  d = Pos   d   0
-dirToPos South d = Pos   0   d
-dirToPos West  d = Pos (-d)  0
+rotate :: Rot -> Pos -> Pos
+rotate RRight (Pos x y) = Pos (-y)   x
+rotate RLeft  (Pos x y) = Pos   y  (-x)
+rotate RFlip  (Pos x y) = Pos (-x) (-y)
 
-rotate :: Rot -> Dir -> Dir
-rotate RRight North = East
-rotate RRight East  = South
-rotate RRight South = West
-rotate RRight West  = North
-rotate RLeft  North = West
-rotate RLeft  East  = North
-rotate RLeft  South = East
-rotate RLeft  West  = South
-rotate RFlip  North = South
-rotate RFlip  East  = West
-rotate RFlip  South = North
-rotate RFlip  West  = East
-
-data State = State Pos Dir
+data State1 = State1 Pos Pos -- Ship, direction
   deriving (Show)
 
-step :: Move -> State -> State
-step (MTranslate dir steps) (State spos sdir) = State (add spos $ dirToPos dir steps) sdir
-step (MForward steps)       (State spos sdir) = State (add spos $ dirToPos sdir steps) sdir
-step (MRotate rot)          (State spos sdir) = State spos (rotate rot sdir)
+step1 :: Move -> State1 -> State1
+step1 (MTranslate dir steps) (State1 spos sdir) = State1 (add spos $ mul steps dir) sdir
+step1 (MForward steps)       (State1 spos sdir) = State1 (add spos $ mul steps sdir) sdir
+step1 (MRotate rot)          (State1 spos sdir) = State1 spos (rotate rot sdir)
 
-run :: [Move] -> State
-run moves = foldr (flip (.) . step) id moves $ State (Pos 0 0) East
+data State2 = State2 Pos Pos -- Ship, waypoint
+  deriving (Show)
+
+step2 :: Move -> State2 -> State2
+step2 (MTranslate dir steps) (State2 spos wp) = State2 spos (add wp $ mul steps dir)
+step2 (MForward steps)       (State2 spos wp) = State2 (add spos $ mul steps wp) wp
+step2 (MRotate rot)          (State2 spos wp) = State2 spos (rotate rot wp)
 
 solver :: [Move] -> IO ()
 solver moves = do
   putStrLn ">> Part 1"
-  let (State pos1 _) = run moves
+  let initialState1 = State1 (Pos 0 0) (Pos 1 0)
+      (State1 pos1 _) = foldl' (flip step1) initialState1 moves
   print $ manhattan pos1
+
+  putStrLn ""
+  putStrLn ">> Part 2"
+  let initialState2 = State2 (Pos 0 0) (Pos 10 (-1))
+      (State2 pos2 _) = foldl' (flip step2) initialState2 moves
+  print $ manhattan pos2
 
 day :: Day
 day = dayParse parser solver
