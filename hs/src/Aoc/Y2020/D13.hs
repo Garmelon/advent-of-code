@@ -7,50 +7,43 @@ module Aoc.Y2020.D13
 import           Control.Monad
 import           Data.Foldable
 import           Data.Function
-import           Data.List
 import           Data.Maybe
-import           Data.Ord
 
 import           Aoc.Day
 import           Aoc.Parse
-
-parser :: Parser (Integer, [Maybe Integer])
-parser = do
-  earliest <- decimal
-  void newline
-  buses <- sepBy ((Just <$> decimal) <|> (Nothing <$ char 'x')) (char ',')
-  void newline
-  pure (earliest, buses)
 
 data Bus = Bus
   { bId    :: Integer
   , bDelta :: Integer
   } deriving (Show)
 
+parser :: Parser (Integer, [Bus])
+parser = do
+  earliest <- decimal
+  void newline
+  buses <- sepBy ((Just <$> decimal) <|> (Nothing <$ char 'x')) (char ',')
+  void newline
+  pure (earliest, [Bus bid delta | (Just bid, delta) <- zip buses [0..]])
+
 departsAt :: Bus -> Integer -> Bool
 departsAt bus time = (time + bDelta bus) `mod` bId bus == 0
 
-includeBus :: Bus -> (Integer, Integer) -> (Integer, Integer)
-includeBus bus (time, step) =
-  let time' = fromJust $ find (bus `departsAt`) $ iterate (+ step) time
-      step' = step * bId bus
-  in  (time', step')
+earliestTimestamp :: [Bus] -> Integer -> Integer -> Integer
+earliestTimestamp []     start _    = start
+earliestTimestamp (b:bs) start step = earliestTimestamp bs time (lcm step $ bId b)
+  where
+    time = fromJust $ find (b `departsAt`) $ iterate (+ step) start
 
-earliestTimestamp :: [Maybe Integer] -> Integer
-earliestTimestamp buses =
-  let busDeltas = sortOn (Down . bId) [Bus bus delta | (Just bus, delta) <- zip buses [0..]]
-  in  fst $ foldl' (flip includeBus) (0, 1) busDeltas
-
-solver :: (Integer, [Maybe Integer]) -> IO ()
+solver :: (Integer, [Bus]) -> IO ()
 solver (earliest, buses) = do
   putStrLn ">> Part 1"
-  let busTimes = [(bus, earliest - mod earliest bus + bus) | Just bus <- buses]
-      (nextBus, nextBusTime) = minimumBy (compare `on` snd) busTimes
-  print $ nextBus * (nextBusTime - earliest)
+  let busTimes = [(bid, earliest `mod` bid) | Bus bid _ <- buses]
+      (nextBus, waitTime) = minimumBy (compare `on` snd) busTimes
+  print $ nextBus * waitTime
 
   putStrLn ""
   putStrLn ">> Part 2"
-  print $ earliestTimestamp buses
+  print $ earliestTimestamp buses 0 1
 
 day :: Day
 day = dayParse parser solver
