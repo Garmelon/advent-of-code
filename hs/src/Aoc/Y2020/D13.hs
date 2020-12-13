@@ -1,29 +1,53 @@
+{-# LANGUAGE NumericUnderscores #-}
+
 module Aoc.Y2020.D13
   ( day
   ) where
 
 import           Control.Monad
+import           Data.Foldable
 import           Data.Function
 import           Data.List
 import           Data.Maybe
+import           Data.Ord
 
 import           Aoc.Day
 import           Aoc.Parse
 
-parser :: Parser (Int, [Int])
+parser :: Parser (Integer, [Maybe Integer])
 parser = do
   earliest <- decimal
   void newline
   buses <- sepBy ((Just <$> decimal) <|> (Nothing <$ char 'x')) (char ',')
   void newline
-  pure (earliest, catMaybes buses)
+  pure (earliest, buses)
 
-solver :: (Int, [Int]) -> IO ()
+data Bus = Bus
+  { bId    :: Integer
+  , bDelta :: Integer
+  } deriving (Show)
+
+includeBus :: Bus -> (Integer, Integer) -> (Integer, Integer)
+includeBus bus (time, step) =
+  let time' = fromJust $ find (\t -> (t + bDelta bus) `mod` bId bus == 0) $ iterate (+ step) time
+      step' = step * bId bus
+  in  (time', step')
+
+earliestTimestamp :: [Maybe Integer] -> Integer -> Integer
+earliestTimestamp buses start =
+  let busDeltas = sortOn (Down . bId) [Bus bus delta | (Just bus, delta) <- zip buses [0..]]
+  in  fst $ foldl' (flip includeBus) (start, 1) busDeltas
+
+solver :: (Integer, [Maybe Integer]) -> IO ()
 solver (earliest, buses) = do
   putStrLn ">> Part 1"
-  let busTimes = [(bus, earliest - mod earliest bus + bus) | bus <- buses]
+  let busTimes = [(bus, earliest - mod earliest bus + bus) | Just bus <- buses]
       (nextBus, nextBusTime) = minimumBy (compare `on` snd) busTimes
   print $ nextBus * (nextBusTime - earliest)
+
+  putStrLn ""
+  putStrLn ">> Part 2"
+  print $ earliestTimestamp buses 100_000_000_000_000
 
 day :: Day
 day = dayParse parser solver
