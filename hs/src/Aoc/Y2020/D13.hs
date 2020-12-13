@@ -27,16 +27,19 @@ data Bus = Bus
   , bDelta :: Integer
   } deriving (Show)
 
+departsAt :: Bus -> Integer -> Bool
+departsAt bus time = (time + bDelta bus) `mod` bId bus == 0
+
 includeBus :: Bus -> (Integer, Integer) -> (Integer, Integer)
 includeBus bus (time, step) =
-  let time' = fromJust $ find (\t -> (t + bDelta bus) `mod` bId bus == 0) $ iterate (+ step) time
+  let time' = fromJust $ find (bus `departsAt`) $ iterate (+ step) time
       step' = step * bId bus
   in  (time', step')
 
-earliestTimestamp :: [Maybe Integer] -> Integer -> Integer
-earliestTimestamp buses start =
+earliestTimestamp :: [Maybe Integer] -> Integer
+earliestTimestamp buses =
   let busDeltas = sortOn (Down . bId) [Bus bus delta | (Just bus, delta) <- zip buses [0..]]
-  in  fst $ foldl' (flip includeBus) (start, 1) busDeltas
+  in  fst $ foldl' (flip includeBus) (0, 1) busDeltas
 
 solver :: (Integer, [Maybe Integer]) -> IO ()
 solver (earliest, buses) = do
@@ -47,7 +50,7 @@ solver (earliest, buses) = do
 
   putStrLn ""
   putStrLn ">> Part 2"
-  print $ earliestTimestamp buses 100_000_000_000_000
+  print $ earliestTimestamp buses
 
 day :: Day
 day = dayParse parser solver
