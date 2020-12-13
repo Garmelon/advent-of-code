@@ -7,7 +7,6 @@ module Aoc.Y2020.D13
 import           Control.Monad
 import           Data.Foldable
 import           Data.Function
-import           Data.Maybe
 
 import           Aoc.Day
 import           Aoc.Parse
@@ -25,21 +24,24 @@ parser = do
   void newline
   pure (earliest, [Bus bid delta | (Just bid, delta) <- zip buses [0..]])
 
+waitTime :: Integer -> Bus -> Integer
+waitTime time bus = time `mod` bId bus
+
 departsAt :: Bus -> Integer -> Bool
 departsAt bus time = (time + bDelta bus) `mod` bId bus == 0
 
+-- See https://en.wikipedia.org/wiki/Chinese_remainder_theorem#Search_by_sieving
 earliestTimestamp :: [Bus] -> Integer -> Integer -> Integer
-earliestTimestamp []     start _    = start
-earliestTimestamp (b:bs) start step = earliestTimestamp bs time (lcm step $ bId b)
-  where
-    time = fromJust $ find (b `departsAt`) $ iterate (+ step) start
+earliestTimestamp [] time _ = time
+earliestTimestamp (b:bs) time step
+  | b `departsAt` time = earliestTimestamp bs     time          (step * bId b)
+  | otherwise          = earliestTimestamp (b:bs) (time + step) step
 
 solver :: (Integer, [Bus]) -> IO ()
 solver (earliest, buses) = do
   putStrLn ">> Part 1"
-  let busTimes = [(bid, earliest `mod` bid) | Bus bid _ <- buses]
-      (nextBus, waitTime) = minimumBy (compare `on` snd) busTimes
-  print $ nextBus * waitTime
+  let nextBus = minimumBy (compare `on` waitTime earliest) buses
+  print $ bId nextBus * waitTime earliest nextBus
 
   putStrLn ""
   putStrLn ">> Part 2"
