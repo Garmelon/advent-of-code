@@ -4,7 +4,6 @@ module Aoc.Y2020.D16
   ( day
   ) where
 
-import           Control.Monad
 import           Data.Bifunctor
 import           Data.List
 
@@ -16,22 +15,17 @@ import           Aoc.Parse
 data Input = Input [(T.Text, Int -> Bool)] [Int] [[Int]]
 
 parser :: Parser Input
-parser = do
-  fields <- many (fieldLine <* newline)
-  void $ string "\nyour ticket:\n"
-  myTicket <- ticket <* newline
-  void $ string "\nnearby tickets:\n"
-  nearbyTickets <- many (ticket <* newline)
-  pure $ Input fields myTicket nearbyTickets
+parser = Input
+  <$> many (field <* newline)
+  <*> (string "\nyour ticket:\n" *> ticket)
+  <*> (string "\nnearby tickets:\n" *> many ticket)
   where
-    fieldLine = do
-      name <- takeWhileP Nothing $ \c -> (c /= ':') && (c /= '\n')
-      void $ string ": "
-      (a, b) <- (,) <$> (decimal <* string "-") <*> decimal
-      void $ string " or "
-      (c, d) <- (,) <$> (decimal <* string "-") <*> decimal
+    bound = around (string "-") decimal decimal
+    field = do
+      name <- lineUntil (==':') <* string ": "
+      ((a, b), (c, d)) <- around (string " or ") bound bound
       pure (name, \n -> (a <= n && n <= b) || (c <= n && n <= d))
-    ticket = decimal `sepBy` string ","
+    ticket = (decimal `sepBy` string ",") <* newline
 
 anyValid :: [(T.Text, Int -> Bool)] -> Int -> Bool
 anyValid fields n = any (($ n) . snd) fields

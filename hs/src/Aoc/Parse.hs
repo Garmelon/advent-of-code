@@ -3,10 +3,12 @@ module Aoc.Parse
   , module Text.Megaparsec.Char
   , module Text.Megaparsec.Char.Lexer
   , Parser
+  , around
   , manyLines
-  , oneSpace
-  , untilSpace
-  , untilEol
+  , lineWhile
+  , lineUntil
+  , lineSatisfy
+  , line
   , lineChar
   , word
   , digit
@@ -25,22 +27,37 @@ import           Text.Megaparsec.Char.Lexer (binary, decimal, float,
                                              hexadecimal, octal, scientific,
                                              signed)
 
+-- General combinators
+
+-- | Like 'between', but keeps the outer results instead of the inner result
+around :: Applicative m => m i -> m l -> m r -> m (l, r)
+around inner left right = (,) <$> (left <* inner) <*> right
+
 type Parser = Parsec Void T.Text
+
+-- AoC-specific parsers
 
 manyLines :: Parser a -> Parser [a]
 manyLines p = endBy (try p) newline
 
-oneSpace :: Parser Char
-oneSpace = label "whitespace character" $ satisfy isSpace
+onLine :: (Char -> Bool) -> Char -> Bool
+onLine _ '\n' = False
+onLine p c    = p c
 
-untilSpace :: Parser T.Text
-untilSpace = takeWhileP (Just "non-whitespace character") (not . isSpace)
+lineWhile :: (Char -> Bool) -> Parser T.Text
+lineWhile = takeWhileP Nothing . onLine
 
-untilEol :: Parser T.Text
-untilEol = takeWhileP (Just "non-newline character") (/= '\n')
+lineUntil :: (Char -> Bool) -> Parser T.Text
+lineUntil p = lineWhile (not . p)
+
+lineSatisfy :: (Char -> Bool) -> Parser Char
+lineSatisfy = satisfy . onLine
+
+line :: Parser T.Text
+line = lineWhile (const True)
 
 lineChar :: Parser Char
-lineChar = label "non-newline character" $ satisfy (/= '\n')
+lineChar = lineSatisfy (const True)
 
 word :: Parser T.Text
 word = takeWhileP (Just "alphanumeric character") isAlphaNum

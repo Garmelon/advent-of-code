@@ -72,10 +72,10 @@ mapFieldsExceptCid f p = [f $ byr p, f $ iyr p, f $ eyr p, f $ hgt p, f $ hcl p,
 
 pField :: T.Text -> Parser a -> Parser (Field a)
 pField name p = do
-  notFollowedBy oneSpace
+  notFollowedBy spaceChar
   void $ string name
   void $ char ':'
-  (Valid <$> try p) <|> (Invalid <$> untilSpace)
+  (Valid <$> try p) <|> (Invalid <$> lineUntil isSpace)
 
 nDigits :: Int -> Parser Int
 nDigits n = do
@@ -115,7 +115,7 @@ pHcl :: Parser Passport
 pHcl = do
   f <- pField "hcl" $ do
     void $ char '#'
-    t <- untilSpace
+    t <- lineUntil isSpace
     guard $ T.length t == 6 && T.all isHexDigit t
     pure t
   pure mempty{hcl = f}
@@ -138,7 +138,7 @@ pCid = do
 parser :: Parser [Passport]
 parser = passport `sepBy` newline
   where
-    passport = mconcat <$> field `endBy1` oneSpace
+    passport = mconcat <$> field `endBy1` spaceChar
     field = pByr <|> pIyr <|> pEyr <|> pHgt <|> pHcl <|> pEcl <|> pPid <|> pCid
 
 hasRequiredKeys :: Passport -> Bool

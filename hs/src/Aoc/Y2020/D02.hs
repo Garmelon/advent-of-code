@@ -19,7 +19,7 @@ parser = manyLines $ Line
   <$> (decimal <* char '-')
   <*> (decimal <* space)
   <*> (anySingle <* char ':' <* space)
-  <*> untilEol
+  <*> line
 
 validCount :: Line -> Bool
 validCount l = n >= lMin l && n <= lMax l
