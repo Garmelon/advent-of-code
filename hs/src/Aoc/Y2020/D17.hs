@@ -22,11 +22,7 @@ newWorld dims slice = Set.fromList $ do
   pure $ [x, y] ++ replicate (dims - 2) 0
 
 vicinity :: Pos -> [Pos]
-vicinity [] = [[]]
-vicinity (x:xs) = do
-  x2 <- [x - 1, x, x + 1]
-  xs2 <- vicinity xs
-  pure $ x2 : xs2
+vicinity = foldr (\x -> ((:) <$> [x - 1, x, x + 1] <*>)) (pure [])
 
 neighbours :: Pos -> [Pos]
 neighbours p = [p2 | p2 <- vicinity p, p2 /= p]
@@ -35,27 +31,25 @@ interesting :: World -> Set.Set Pos
 interesting w = Set.fromList $ vicinity =<< Set.toList w
 
 alive :: Bool -> Int -> Bool
-alive True  2 = True
-alive True  3 = True
-alive False 3 = True
-alive _     _ = False
+alive True 2 = True
+alive _    3 = True
+alive _    _ = False
 
 step :: World -> World
-step w = Set.filter go $ interesting w
-  where
-    go p = alive (p `Set.member` w) (length $ filter (`Set.member` w) $ neighbours p)
+step w = flip Set.filter (interesting w) $ \p ->
+  alive (p `Set.member` w) (length $ filter (`Set.member` w) $ neighbours p)
 
-steps :: World -> World
-steps = foldr (.) id $ replicate 6 step
+steps :: Int -> World -> World
+steps n = foldr (.) id $ replicate n step
 
 solver :: [[Bool]] -> IO ()
 solver slice = do
   putStrLn ">> Part 1"
-  print $ Set.size $ steps $ newWorld 3 slice
+  print $ Set.size $ steps 6 $ newWorld 3 slice
 
   putStrLn ""
   putStrLn ">> Part 2"
-  print $ Set.size $ steps $ newWorld 4 slice
+  print $ Set.size $ steps 6 $ newWorld 4 slice
 
 day :: Day
 day = dayParse parser solver
