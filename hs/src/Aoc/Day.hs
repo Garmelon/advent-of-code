@@ -9,11 +9,8 @@ module Aoc.Day
   , dayParse
   ) where
 
-import           Control.Monad
-
-import qualified Data.Text       as T
-import qualified Data.Text.IO    as T
-import           Text.Megaparsec
+import qualified Data.Text    as T
+import qualified Data.Text.IO as T
 
 import           Aoc.Parse
 
@@ -37,15 +34,13 @@ dayPure = DayPure
 dayFile :: (FilePath -> IO ()) -> Day
 dayFile = DayFile
 
-dayString :: (String -> IO ()) -> Day
-dayString f = dayFile $ f <=< readFile
+dayString :: (FilePath -> String -> IO ()) -> Day
+dayString f = dayFile $ \path -> f path =<< readFile path
 
-dayText :: (T.Text -> IO ()) -> Day
-dayText f = dayFile $ f <=< T.readFile
+dayText :: (FilePath -> T.Text -> IO ()) -> Day
+dayText f = dayFile $ \path -> f path =<< T.readFile path
 
 dayParse :: Parser a -> (a -> IO ()) -> Day
 dayParse p f = dayFile $ \path -> do
   text <- T.readFile path
-  case parse (p <* eof) path text of
-    Right a -> f a
-    Left e  -> putStrLn $ errorBundlePretty e
+  parseAndSolve path text p f

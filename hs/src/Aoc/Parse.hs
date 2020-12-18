@@ -3,6 +3,7 @@ module Aoc.Parse
   , module Text.Megaparsec.Char
   , module Text.Megaparsec.Char.Lexer
   , Parser
+  , parseAndSolve
   , around
   , manyLines
   , lineWhile
@@ -27,13 +28,20 @@ import           Text.Megaparsec.Char.Lexer (binary, decimal, float,
                                              hexadecimal, octal, scientific,
                                              signed)
 
+-- The parser and applying it
+
+type Parser = Parsec Void T.Text
+
+parseAndSolve :: FilePath -> T.Text -> Parser a -> (a -> IO ()) -> IO ()
+parseAndSolve path text parser solver = case parse (parser <* eof) path text of
+  Right a -> solver a
+  Left e  -> putStrLn $ errorBundlePretty e
+
 -- General combinators
 
 -- | Like 'between', but keeps the outer results instead of the inner result
 around :: Applicative m => m i -> m l -> m r -> m (l, r)
 around inner left right = (,) <$> (left <* inner) <*> right
-
-type Parser = Parsec Void T.Text
 
 -- AoC-specific parsers
 
