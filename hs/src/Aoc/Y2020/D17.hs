@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections     #-}
 
 module Aoc.Y2020.D17
   ( day
@@ -13,19 +12,21 @@ import           Aoc.Parse
 parser :: Parser [[Bool]]
 parser = manyLines $ many $ (False <$ char '.') <|> (True <$ char '#')
 
-type Pos = (Int, Int, Int)
+type Pos = [Int]
 type World = Set.Set Pos
 
-newWorld :: [[Bool]] -> World
-newWorld
-  = Set.fromList
-  . map fst
-  . filter snd
-  . concat
-  . zipWith (\y -> zipWith (\x -> ((x, y, 0),)) [0..]) [0..]
+newWorld :: Int -> [[Bool]] -> World
+newWorld dims slice = Set.fromList $ do
+  (y, row) <- zip [0..] slice
+  (x, True) <- zip [0..] row
+  pure $ [x, y] ++ replicate (dims - 2) 0
 
 vicinity :: Pos -> [Pos]
-vicinity (x, y, z) = (,,) <$> [x - 1, x, x + 1] <*> [y - 1, y, y + 1] <*> [z - 1, z, z + 1]
+vicinity [] = [[]]
+vicinity (x:xs) = do
+  x2 <- [x - 1, x, x + 1]
+  xs2 <- vicinity xs
+  pure $ x2 : xs2
 
 neighbours :: Pos -> [Pos]
 neighbours p = [p2 | p2 <- vicinity p, p2 /= p]
@@ -50,8 +51,11 @@ steps = foldr (.) id $ replicate 6 step
 solver :: [[Bool]] -> IO ()
 solver slice = do
   putStrLn ">> Part 1"
-  let world = newWorld slice
-  print $ Set.size $ steps world
+  print $ Set.size $ steps $ newWorld 3 slice
+
+  putStrLn ""
+  putStrLn ">> Part 2"
+  print $ Set.size $ steps $ newWorld 4 slice
 
 day :: Day
 day = dayParse parser solver
