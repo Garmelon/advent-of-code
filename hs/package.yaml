@@ -6,6 +6,7 @@ dependencies:
 - containers
 - megaparsec
 - optparse-applicative
+- parser-combinators
 - text
 - transformers
 
