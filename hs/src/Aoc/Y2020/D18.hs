@@ -5,7 +5,6 @@ module Aoc.Y2020.D18
   ) where
 
 import           Control.Monad
-import           Data.Char
 
 import           Control.Monad.Combinators.Expr
 import qualified Data.Text                      as T
@@ -15,10 +14,10 @@ import           Aoc.Day
 import           Aoc.Parse
 
 lexeme :: Parser a -> Parser a
-lexeme = L.lexeme (void $ lineWhile isSpace)
+lexeme = L.lexeme (void lineSpace)
 
 symbol :: T.Text -> Parser T.Text
-symbol = L.symbol (void $ lineWhile isSpace)
+symbol = L.symbol (void lineSpace)
 
 parser :: [[Operator Parser Int]] -> Parser [Int]
 parser table = manyLines expr

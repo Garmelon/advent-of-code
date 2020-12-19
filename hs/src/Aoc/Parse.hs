@@ -11,6 +11,7 @@ module Aoc.Parse
   , lineSatisfy
   , line
   , lineChar
+  , lineSpace
   , word
   , digit
   ) where
@@ -66,6 +67,9 @@ line = lineWhile (const True)
 
 lineChar :: Parser Char
 lineChar = lineSatisfy (const True)
+
+lineSpace :: Parser T.Text
+lineSpace = lineWhile isSpace
 
 word :: Parser T.Text
 word = takeWhileP (Just "alphanumeric character") isAlphaNum
