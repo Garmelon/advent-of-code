@@ -67,5 +67,10 @@ solver (rules, msgs) = do
   putStrLn ">> Part 1"
   print $ length $ filter (isValid rules) msgs
 
+  putStrLn ""
+  putStrLn ">> Part 2"
+  let rules2 = Map.insert 8 (Branch [[42],[42,8]]) $ Map.insert 11 (Branch [[42,31],[42,11,31]]) rules
+  print $ length $ filter (isValid rules2) msgs
+
 day :: Day
 day = dayParse parser solver
