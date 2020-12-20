@@ -5,6 +5,7 @@ module Aoc.Y2020.D20
   ) where
 
 import           Control.Monad
+import           Data.Bool
 import           Data.List
 import           Data.Maybe
 
@@ -29,26 +30,17 @@ tTop (Tile l) = head l
 tBottom :: Tile -> [Bool]
 tBottom (Tile l) = last l
 
-tTranspose :: Tile -> Tile
-tTranspose (Tile l) = Tile $ transpose l
-
 tFlipV :: Tile -> Tile
-tFlipV (Tile l) = Tile $ reverse l
-
-tFlipH :: Tile -> Tile
-tFlipH (Tile l) = Tile $ map reverse l
+tFlipV = Tile . reverse . unTile
 
 tTurnCw :: Tile -> Tile
-tTurnCw = tFlipH . tTranspose
-
-tTurnCcw :: Tile -> Tile
-tTurnCcw = tFlipV . tTranspose
+tTurnCw = Tile . transpose . reverse . unTile
 
 tRotations :: Tile -> [Tile]
 tRotations = take 4 . iterate tTurnCw
 
 tVariations :: Tile -> [Tile]
-tVariations t = tRotations t ++ tRotations (tFlipH t)
+tVariations t = tRotations t ++ tRotations (tFlipV t)
 
 tShrink :: Tile -> Tile
 tShrink (Tile l) = Tile $ tail $ init $ map (tail . init) l
@@ -146,20 +138,16 @@ solver tiles = do
   let cornerIds = map (fst . (placed Map.!)) $ corners $ Map.keys placed
   print $ product cornerIds
 
+  putStrLn ""
   putStrLn ">> Part 2"
   let bigTile = foldr1 tJoinV $ map (foldr1 tJoinH . map tShrink) $ layout placed
-
-  -- Pretty printing
-  -- let (Tile l) = bigTile
-  -- for_ l $ \row -> do
-  --   for_ row $ \field -> putStr $ bool "." "#" field
-  --   putStrLn ""
-
-  let monstersFound = maximum $ map (monsters . unTile) $ tVariations bigTile
+      monstersFound = maximum $ map (monsters . unTile) $ tVariations bigTile
       hashes = length $ filter id $ concat $ unTile bigTile
-  print monstersFound
-  print hashes
   print $ hashes - monstersFound * 15
+
+  -- Pretty-printing
+  putStrLn ""
+  putStr $ unlines $ map (map $ bool '.' '#') $ unTile bigTile
 
 day :: Day
 day = dayParse parser solver
