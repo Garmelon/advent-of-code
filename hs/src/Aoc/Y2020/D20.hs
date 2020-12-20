@@ -4,17 +4,17 @@ module Aoc.Y2020.D20
   ( day
   ) where
 
+import           Control.Monad
 import           Data.List
 import           Data.Maybe
-import           Control.Monad
 
-import qualified Data.Map  as Map
-import qualified Data.Set  as Set
+import qualified Data.Map      as Map
+import qualified Data.Set      as Set
 
 import           Aoc.Day
 import           Aoc.Parse
 
-newtype Tile = Tile [[Bool]] -- List of rows
+newtype Tile = Tile { unTile :: [[Bool]] } -- List of rows
   deriving (Show)
 
 tLeft :: Tile -> [Bool]
@@ -49,6 +49,15 @@ tRotations = take 4 . iterate tTurnCw
 
 tVariations :: Tile -> [Tile]
 tVariations t = tRotations t ++ tRotations (tFlipH t)
+
+tShrink :: Tile -> Tile
+tShrink (Tile l) = Tile $ tail $ init $ map (tail . init) l
+
+tJoinV :: Tile -> Tile -> Tile
+tJoinV (Tile t) (Tile b) = Tile $ t ++ b
+
+tJoinH :: Tile -> Tile -> Tile
+tJoinH (Tile l) (Tile r) = Tile $ zipWith (++) l r
 
 parser :: Parser (Map.Map Int Tile)
 parser = Map.fromList <$> (tile `sepBy` newline)
@@ -101,20 +110,56 @@ whileJust f a = maybe a (whileJust f) $ f a
 placeAll :: Map.Map Int Tile -> Map.Map Pos (Int, Tile)
 placeAll tiles = whileJust (place tiles) $ Map.singleton (0, 0) $ head $ Map.assocs tiles
 
+extent :: [Pos] -> (Int, Int, Int, Int)
+extent positions =
+  ( minimum $ map fst positions
+  , maximum $ map fst positions
+  , minimum $ map snd positions
+  , maximum $ map snd positions
+  )
+
 corners :: [Pos] -> [Pos]
-corners positions =
-  let minX = minimum $ map fst positions
-      maxX = maximum $ map fst positions
-      minY = minimum $ map snd positions
-      maxY = maximum $ map snd positions
-  in  (,) <$> [minX, maxX] <*> [minY, maxY]
+corners positions = (,) <$> [minX, maxX] <*> [minY, maxY]
+  where
+    (minX, maxX, minY, maxY) = extent positions
+
+layout :: Map.Map Pos (Int, Tile) -> [[Tile]]
+layout placed = map (\y -> map (\x -> snd $ placed Map.! (x, y)) [minX..maxX]) [minY..maxY]
+  where
+    (minX, maxX, minY, maxY) = extent $ Map.keys placed
+
+isMonster :: [[Bool]] -> Bool
+isMonster l = case take 3 $ map (take 20) l of
+  [[_   ,_   ,_,_,_   ,_   ,_   ,_   ,_,_,_   ,_   ,_   ,_   ,_,_,_   ,_   ,True,_   ],
+   [True,_   ,_,_,_   ,True,True,_   ,_,_,_   ,True,True,_   ,_,_,_   ,True,True,True],
+   [_   ,True,_,_,True,_   ,_   ,True,_,_,True,_   ,_   ,True,_,_,True,_   ,_   ,_   ]] -> True
+  _ -> False
+
+monsters :: [[Bool]] -> Int
+monsters l = length $ filter isMonster $ tails l >>= transpose . map tails
 
 solver :: Map.Map Int Tile -> IO ()
 solver tiles = do
-  putStrLn ">> Part 1"
   let placed = placeAll tiles
-      cornerIds = map (fst . (placed Map.!)) $ corners $ Map.keys placed
+
+  putStrLn ">> Part 1"
+  let cornerIds = map (fst . (placed Map.!)) $ corners $ Map.keys placed
   print $ product cornerIds
+
+  putStrLn ">> Part 2"
+  let bigTile = foldr1 tJoinV $ map (foldr1 tJoinH . map tShrink) $ layout placed
+
+  -- Pretty printing
+  -- let (Tile l) = bigTile
+  -- for_ l $ \row -> do
+  --   for_ row $ \field -> putStr $ bool "." "#" field
+  --   putStrLn ""
+
+  let monstersFound = maximum $ map (monsters . unTile) $ tVariations bigTile
+      hashes = length $ filter id $ concat $ unTile bigTile
+  print monstersFound
+  print hashes
+  print $ hashes - monstersFound * 15
 
 day :: Day
 day = dayParse parser solver
