@@ -38,6 +38,7 @@ impl Day {
 
 days! {
     Y2022D01: "2022_01",
+    Y2022D02: "2022_02",
 }
 
 #[derive(Parser)]
@@ -71,6 +72,7 @@ fn main() -> anyhow::Result<()> {
         let input = fs::read_to_string(file)?;
         match day {
             Day::Y2022D01 => y2022::d01::solve(input)?,
+            Day::Y2022D02 => y2022::d02::solve(input)?,
         }
     }
 
