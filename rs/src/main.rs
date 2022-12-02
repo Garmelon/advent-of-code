@@ -6,8 +6,28 @@ use std::{fmt, fs};
 
 use clap::Parser;
 
-enum Day {
-    Y2022D01,
+macro_rules! days {
+    ( $( $day:ident : $name:expr, )* ) => {
+        enum Day { $( $day, )* }
+
+        impl fmt::Display for Day{
+            fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
+                match self {
+                    $( Self::$day => $name, )*
+                }.fmt(f)
+            }
+        }
+
+        impl FromStr for Day {
+            type Err = ();
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                Ok(match s {
+                    $( $name => Self::$day, )*
+                    _ => return Err(()),
+                })
+            }
+        }
+    };
 }
 
 impl Day {
@@ -16,24 +36,8 @@ impl Day {
     }
 }
 
-impl fmt::Display for Day {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Day::Y2022D01 => "2022_01",
-        }
-        .fmt(f)
-    }
-}
-
-impl FromStr for Day {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "2022_01" => Self::Y2022D01,
-            _ => return Err(()),
-        })
-    }
+days! {
+    Y2022D01: "2022_01",
 }
 
 #[derive(Parser)]
