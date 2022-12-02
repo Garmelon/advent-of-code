@@ -1,4 +1,4 @@
-mod d01;
+mod y2022;
 
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -66,7 +66,7 @@ fn main() -> anyhow::Result<()> {
         println!("### Solving day {day}");
         let input = fs::read_to_string(file)?;
         match day {
-            Day::Y2022D01 => d01::solve(input)?,
+            Day::Y2022D01 => y2022::d01::solve(input)?,
         }
     }
 
