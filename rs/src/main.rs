@@ -39,6 +39,7 @@ impl Day {
 days! {
     Y2022D01: "2022_01",
     Y2022D02: "2022_02",
+    Y2022D03: "2022_03",
 }
 
 #[derive(Parser)]
@@ -73,6 +74,7 @@ fn main() -> anyhow::Result<()> {
         match day {
             Day::Y2022D01 => y2022::d01::solve(input)?,
             Day::Y2022D02 => y2022::d02::solve(input)?,
+            Day::Y2022D03 => y2022::d03::solve(input)?,
         }
     }
 
