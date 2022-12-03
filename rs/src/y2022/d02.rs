@@ -71,10 +71,7 @@ fn read_round(line: &str) -> (Choice, Choice, Outcome) {
 }
 
 pub fn solve(input: String) {
-    let matches = input
-        .lines()
-        .map(|l| read_round(l.trim()))
-        .collect::<Vec<_>>();
+    let matches = input.lines().map(read_round).collect::<Vec<_>>();
 
     // Part 1
     let score = matches

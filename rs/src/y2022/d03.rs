@@ -16,7 +16,7 @@ fn highest_score(i: u64) -> u32 {
 }
 
 pub fn solve(input: String) {
-    let backpacks = input.lines().map(|l| l.trim()).collect::<Vec<_>>();
+    let backpacks = input.lines().collect::<Vec<_>>();
 
     // Part 1
     let score = backpacks
