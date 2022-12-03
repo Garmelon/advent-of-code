@@ -1,10 +1,9 @@
 fn parse_item(c: char) -> u64 {
-    let n = match c {
+    1 << match c {
         'a'..='z' => c as u64 - 'a' as u64,
         'A'..='Z' => c as u64 - 'A' as u64 + 26,
         _ => panic!(),
-    };
-    1 << n
+    }
 }
 
 fn parse_items(s: &str) -> u64 {
@@ -12,7 +11,7 @@ fn parse_items(s: &str) -> u64 {
 }
 
 // Returns the score of the item with the highest score
-fn calc_score(i: u64) -> u32 {
+fn highest_score(i: u64) -> u32 {
     64 - i.leading_zeros()
 }
 
@@ -24,7 +23,7 @@ pub fn solve(input: String) -> anyhow::Result<()> {
         .iter()
         .map(|backpack| {
             let (l, r) = backpack.split_at(backpack.len() / 2);
-            calc_score(parse_items(l) & parse_items(r))
+            highest_score(parse_items(l) & parse_items(r))
         })
         .sum::<u32>();
     println!("Part 1: {score}");
@@ -32,15 +31,13 @@ pub fn solve(input: String) -> anyhow::Result<()> {
     // Part 2
     let score = backpacks
         .chunks(3)
-        .map(|chunk| {
-            calc_score(
-                chunk
-                    .iter()
-                    .map(|i| parse_items(i))
-                    .reduce(|a, b| a & b)
-                    .unwrap(),
-            )
+        .map(|c| {
+            c.iter()
+                .map(|i| parse_items(i))
+                .reduce(|a, b| a & b)
+                .unwrap()
         })
+        .map(highest_score)
         .sum::<u32>();
     println!("Part 2: {score}");
 
