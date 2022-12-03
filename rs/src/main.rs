@@ -2,7 +2,7 @@ mod y2022;
 
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::{fmt, fs};
+use std::{fmt, fs, io};
 
 use clap::Parser;
 
@@ -47,7 +47,7 @@ struct Args {
     files: Vec<PathBuf>,
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> io::Result<()> {
     let args = Args::parse();
 
     if args.files.is_empty() {
@@ -72,9 +72,9 @@ fn main() -> anyhow::Result<()> {
         println!("### Solving day {day}");
         let input = fs::read_to_string(file)?;
         match day {
-            Day::Y2022D01 => y2022::d01::solve(input)?,
-            Day::Y2022D02 => y2022::d02::solve(input)?,
-            Day::Y2022D03 => y2022::d03::solve(input)?,
+            Day::Y2022D01 => y2022::d01::solve(input),
+            Day::Y2022D02 => y2022::d02::solve(input),
+            Day::Y2022D03 => y2022::d03::solve(input),
         }
     }
 

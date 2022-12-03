@@ -15,7 +15,7 @@ fn highest_score(i: u64) -> u32 {
     64 - i.leading_zeros()
 }
 
-pub fn solve(input: String) -> anyhow::Result<()> {
+pub fn solve(input: String) {
     let backpacks = input.lines().map(|l| l.trim()).collect::<Vec<_>>();
 
     // Part 1
@@ -40,6 +40,4 @@ pub fn solve(input: String) -> anyhow::Result<()> {
         .map(highest_score)
         .sum::<u32>();
     println!("Part 2: {score}");
-
-    Ok(())
 }

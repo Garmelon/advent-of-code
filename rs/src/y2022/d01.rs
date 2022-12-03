@@ -1,4 +1,4 @@
-pub fn solve(input: String) -> anyhow::Result<()> {
+pub fn solve(input: String) {
     let mut elves = input
         .trim()
         .split("\n\n")
@@ -18,6 +18,4 @@ pub fn solve(input: String) -> anyhow::Result<()> {
     // Part 2
     let top_three = elves.iter().rev().take(3).sum::<u32>();
     println!("Part 2: {top_three}");
-
-    Ok(())
 }

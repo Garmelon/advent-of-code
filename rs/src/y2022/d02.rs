@@ -70,7 +70,7 @@ fn read_round(line: &str) -> (Choice, Choice, Outcome) {
     (l, rc, ro)
 }
 
-pub fn solve(input: String) -> anyhow::Result<()> {
+pub fn solve(input: String) {
     let matches = input
         .lines()
         .map(|l| read_round(l.trim()))
@@ -89,6 +89,4 @@ pub fn solve(input: String) -> anyhow::Result<()> {
         .map(|(l, _, r)| r.against(*l).score() + r.score())
         .sum::<u32>();
     println!("Part 2: {score}");
-
-    Ok(())
 }
