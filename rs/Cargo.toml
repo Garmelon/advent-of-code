@@ -1,6 +1,6 @@
 [package]
-name = "advent-of-code"
-version = "0.1.0"
+name = "aoc-rs"
+version = "0.0.0"
 edition = "2021"
 
 [dependencies]
