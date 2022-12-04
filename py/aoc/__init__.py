@@ -17,12 +17,7 @@ def main():
     parser.add_argument("files", type=Path, nargs="+")
     args = parser.parse_args()
 
-    first_day = True
     for file in args.files:
-        if not first_day:
-            print()
-        first_day = False
-
         day = DAYS.get(file.stem)
         if day is None:
             print(f"### Could not determine day: {file}", file=sys.stderr)
@@ -32,3 +27,4 @@ def main():
         with open(file) as f:
             inputstr = f.read()
         day(inputstr)
+        print()
