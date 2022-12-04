@@ -1,0 +1,16 @@
+cabal-version: 3.4
+-- Later versions are not supported by my current cabal2nix.
+
+name: aoc-hs
+version: 0.0.0.0
+build-type: Simple
+
+executable hs2
+    hs-source-dirs: app
+    main-is: Main.hs
+
+    build-depends:
+        base ^>=4.15.1.0
+
+    default-language: Haskell2010
+    ghc-options: -Wall
