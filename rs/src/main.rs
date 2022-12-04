@@ -45,15 +45,12 @@ days! {
 
 #[derive(Parser)]
 struct Args {
+    #[arg(required = true)]
     files: Vec<PathBuf>,
 }
 
 fn main() -> io::Result<()> {
     let args = Args::parse();
-
-    if args.files.is_empty() {
-        eprintln!("No days specified");
-    }
 
     let mut first_day = true;
     for file in args.files {
