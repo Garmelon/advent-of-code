@@ -1,0 +1,10 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aoc-py"
+version = "0.0.0"
+
+[project.scripts]
+aoc-py = "aoc:main"
