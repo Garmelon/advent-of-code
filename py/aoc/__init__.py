@@ -2,9 +2,10 @@ import sys
 import argparse
 from pathlib import Path
 
-from .y2022 import d04
+from .y2022 import d01, d04
 
 DAYS = {
+    "2022_01": y2022.d01.solve,
     "2022_04": y2022.d04.solve,
 }
 
