@@ -52,13 +52,7 @@ struct Args {
 fn main() -> io::Result<()> {
     let args = Args::parse();
 
-    let mut first_day = true;
     for file in args.files {
-        if !first_day {
-            println!();
-        }
-        first_day = false;
-
         let day = match Day::from_path(&file) {
             Some(day) => day,
             None => {
@@ -75,6 +69,7 @@ fn main() -> io::Result<()> {
             Day::Y2022D03 => y2022::d03::solve(input),
             Day::Y2022D04 => y2022::d04::solve(input),
         }
+        println!()
     }
 
     Ok(())
