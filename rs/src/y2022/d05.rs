@@ -37,7 +37,7 @@ pub fn solve(input: String) {
 
     // Part 1
     let mut part1 = stacks.clone();
-    for (amount, from, to) in moves {
+    for &(amount, from, to) in &moves {
         for _ in 0..amount {
             let value = part1[from - 1].pop().unwrap();
             part1[to - 1].push(value);
@@ -45,4 +45,17 @@ pub fn solve(input: String) {
     }
     let part1 = part1.iter().map(|s| s.last().unwrap()).collect::<String>();
     println!("Part 1: {}", part1);
+
+    // Par 2
+    let mut part2 = stacks.clone();
+    for (amount, from, to) in moves {
+        let mut values = vec![];
+        for _ in 0..amount {
+            values.push(part2[from - 1].pop().unwrap());
+        }
+        values.reverse();
+        part2[to - 1].append(&mut values);
+    }
+    let part2 = part2.iter().map(|s| s.last().unwrap()).collect::<String>();
+    println!("Part 2: {}", part2);
 }
