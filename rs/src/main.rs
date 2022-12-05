@@ -56,7 +56,7 @@ fn main() -> io::Result<()> {
         let day = match Day::from_path(&file) {
             Some(day) => day,
             None => {
-                eprintln!("### Could not determine day: {file:?}");
+                eprintln!("### can't solve {file:?}");
                 continue;
             }
         };

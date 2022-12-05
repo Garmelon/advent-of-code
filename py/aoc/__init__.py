@@ -24,7 +24,7 @@ def main():
     for file in args.files:
         day = DAYS.get(file.stem)
         if day is None:
-            print(f"### Could not determine day: {file}", file=sys.stderr)
+            print(f"### Can't solve {file}", file=sys.stderr)
             continue
 
         print(f"### Solving day {file.stem}")
