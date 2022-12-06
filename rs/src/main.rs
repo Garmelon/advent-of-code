@@ -61,12 +61,12 @@ fn main() -> io::Result<()> {
         let day = match Day::from_path(&file) {
             Some(day) => day,
             None => {
-                eprintln!("### can't solve {file:?}");
+                eprintln!("### Can't solve {file:?}");
                 continue;
             }
         };
 
-        println!("### Solving day {day}");
+        eprintln!("### Solving {file:?}");
         let input = fs::read_to_string(file)?;
         match day {
             Day::Y2022D01 => y2022::d01::solve(input),
@@ -76,7 +76,7 @@ fn main() -> io::Result<()> {
             Day::Y2022D05 => y2022::d05::solve(input),
             Day::Y2022D06 => y2022::d06::solve(input),
         }
-        println!()
+        eprintln!()
     }
 
     Ok(())
