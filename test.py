@@ -42,9 +42,16 @@ def main():
             print(f"{GRAY}No solution{RESET} for {inputpath}")
             continue
 
-        resultstr = subprocess.run(
-            args.command + [inputpath], check=True, capture_output=True, text=True
-        ).stdout
+        try:
+            resultstr = subprocess.run(
+                args.command + [inputpath],
+                check=True,
+                text=True,
+                capture_output=True,
+            ).stdout
+        except subprocess.CalledProcessError:
+            print(f"{RED}Crashed{RESET} on {inputpath}")
+            continue
 
         if resultstr.strip() == solutionstr.strip():
             print(f"{GREEN}Passed{RESET} {inputpath}")
