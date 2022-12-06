@@ -46,7 +46,7 @@ pub fn solve(input: String) {
     let part1 = part1.iter().map(|s| s.last().unwrap()).collect::<String>();
     println!("Part 1: {}", part1);
 
-    // Par 2
+    // Part 2
     let mut part2 = stacks.clone();
     for (amount, from, to) in moves {
         let mut values = vec![];
