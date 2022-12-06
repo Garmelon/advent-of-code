@@ -1,46 +1,16 @@
-# PART 1
-
-
-def find_doubles(steps):
+def santa(directions):
     x, y = 0, 0
     houses = {(0, 0)}
-    for step in steps:
-        if step == "^":
-            y += 1
-        elif step == "v":
-            y -= 1
-        elif step == "<":
-            x -= 1
-        elif step == ">":
-            x += 1
+    for d in directions:
+        dx, dy = {"^": (0, 1), "v": (0, -1), "<": (-1, 0), ">": (1, 0)}[d]
+        x, y = x + dx, y + dy
         houses.add((x, y))
     return houses
 
 
-# PART 2
-
-
-def split_string(s):
-    s1 = ""
-    s2 = ""
-    while True:
-        if not s:
-            break
-        s1 += s[0]
-        s = s[1:]
-        if not s:
-            break
-        s2 += s[0]
-        s = s[1:]
-    return s1, s2
-
-
 def solve(inputstr):
-    steps = inputstr.strip()
-    doubles = len(find_doubles(steps))
-    print(f"Part 1: {doubles}")
-    santa, robot = split_string(steps)
-    santa_doubles = find_doubles(santa)
-    robot_doubles = find_doubles(robot)
-    doubles_2 = len(santa_doubles | robot_doubles)
-    print(f"Part 2: {doubles_2}")
+    directions = inputstr.strip()
+    part1 = len(santa(directions))
+    print(f"Part 1: {part1}")
+    part2 = len(santa(directions[::2]) | santa(directions[1::2]))
+    print(f"Part 2: {part2}")
