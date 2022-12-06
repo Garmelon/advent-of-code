@@ -11,12 +11,20 @@ MAGENTA = "\033[1;35m"
 RED = "\033[1;31m"
 
 
+def find_solution(path, solutions):
+    if path.suffix == ".input":
+        solutions[path] = path.parent / (path.stem + ".solution")
+
+
 def find_solutions(paths):
-    pairs = {}
+    solutions = {}
     for path in paths:
-        if path.suffix == ".input":
-            pairs[path] = path.parent / (path.stem + ".solution")
-    return pairs
+        if path.is_dir():
+            for subpath in path.glob("**/*.input"):
+                find_solution(subpath, solutions)
+        else:
+            find_solution(path, solutions)
+    return solutions
 
 
 def main():
