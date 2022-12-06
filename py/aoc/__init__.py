@@ -2,7 +2,7 @@ import sys
 import argparse
 from pathlib import Path
 
-from .y2017 import d01, d02, d03, d04, d05, d06, d07, d08
+from .y2017 import d01, d02, d03, d04, d05, d06, d07, d08, d09
 from .y2018 import d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11
 from .y2020 import d10
 from .y2021 import d14
@@ -17,6 +17,7 @@ DAYS = {
     "2017_06": y2017.d06.solve,
     "2017_07": y2017.d07.solve,
     "2017_08": y2017.d08.solve,
+    "2017_09": y2017.d09.solve,
     "2018_01": y2018.d01.solve,
     "2018_02": y2018.d02.solve,
     "2018_03": y2018.d03.solve,
