@@ -1,25 +1,15 @@
-use core::panic;
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 
-fn scan(input: &str, lookback: usize) -> usize {
-    let mut last_n = VecDeque::with_capacity(lookback);
-    for (i, c) in input.chars().enumerate() {
-        last_n.push_back(c);
-        while last_n.len() > lookback {
-            last_n.pop_front();
-        }
-        if last_n.len() < lookback {
-            continue;
-        }
-        let last_n_set = last_n.iter().copied().collect::<HashSet<_>>();
-        if last_n_set.len() == lookback {
-            return i;
-        }
-    }
-    panic!()
+fn scan(chars: &[char], lookback: usize) -> usize {
+    chars
+        .windows(lookback)
+        .position(|w| w.iter().copied().collect::<HashSet<_>>().len() == lookback)
+        .unwrap()
+        + lookback
 }
 
 pub fn solve(input: String) {
-    println!("Part 1: {}", scan(&input, 4) + 1);
-    println!("Part 2: {}", scan(&input, 14) + 1);
+    let chars = input.chars().collect::<Vec<_>>();
+    println!("Part 1: {}", scan(&chars, 4));
+    println!("Part 2: {}", scan(&chars, 14));
 }
