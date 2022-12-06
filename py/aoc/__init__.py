@@ -17,19 +17,23 @@ DAYS = {
 }
 
 
+def eprint(*args, **kwargs):
+    print(*args, **kwargs, file=sys.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("files", type=Path, nargs="+")
     args = parser.parse_args()
 
     for file in args.files:
-        day = DAYS.get(file.stem)
+        day = DAYS.get(file.stem[:7])
         if day is None:
-            print(f"### Can't solve {file}", file=sys.stderr)
+            eprint(f"### Can't solve {file}")
             continue
 
-        print(f"### Solving day {file.stem}")
+        eprint(f"### Solving {file}")
         with open(file) as f:
             inputstr = f.read()
         day(inputstr)
-        print()
+        eprint()
