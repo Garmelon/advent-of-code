@@ -1,5 +1,6 @@
 mod y2022;
 
+use std::os::unix::prelude::OsStrExt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::{fmt, fs, io};
@@ -32,7 +33,9 @@ macro_rules! days {
 
 impl Day {
     fn from_path(path: &Path) -> Option<Self> {
-        Self::from_str(path.file_stem()?.to_str()?).ok()
+        let day = &path.file_stem()?.as_bytes()[..7];
+        let day = String::from_utf8_lossy(day);
+        Self::from_str(&day).ok()
     }
 }
 
@@ -42,6 +45,7 @@ days! {
     Y2022D03: "2022_03",
     Y2022D04: "2022_04",
     Y2022D05: "2022_05",
+    Y2022D06: "2022_06",
 }
 
 #[derive(Parser)]
@@ -70,6 +74,7 @@ fn main() -> io::Result<()> {
             Day::Y2022D03 => y2022::d03::solve(input),
             Day::Y2022D04 => y2022::d04::solve(input),
             Day::Y2022D05 => y2022::d05::solve(input),
+            Day::Y2022D06 => y2022::d06::solve(input),
         }
         println!()
     }
