@@ -113,11 +113,19 @@ pub fn solve(input: String) {
         }
     }
 
-    let part1 = fs
-        .dirs()
-        .into_iter()
-        .map(|d| d.size())
-        .filter(|s| *s <= 100000)
-        .sum::<usize>();
+    let dir_sizes = fs.dirs().into_iter().map(|d| d.size()).collect::<Vec<_>>();
+
+    let part1 = dir_sizes.iter().filter(|s| **s <= 100000).sum::<usize>();
     println!("Part 1: {part1}");
+
+    let total_available = 70000000;
+    let required_for_update = 30000000;
+    let unused = total_available - fs.size();
+    let free_at_least = required_for_update - unused;
+    let part2 = dir_sizes
+        .into_iter()
+        .filter(|s| *s >= free_at_least)
+        .min()
+        .unwrap();
+    println!("Part 2: {part2}");
 }
