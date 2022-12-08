@@ -47,6 +47,7 @@ days! {
     Y2022D05: "2022_05",
     Y2022D06: "2022_06",
     Y2022D07: "2022_07",
+    Y2022D08: "2022_08",
 }
 
 #[derive(Parser)]
@@ -77,6 +78,7 @@ fn main() -> io::Result<()> {
             Day::Y2022D05 => y2022::d05::solve(input),
             Day::Y2022D06 => y2022::d06::solve(input),
             Day::Y2022D07 => y2022::d07::solve(input),
+            Day::Y2022D08 => y2022::d08::solve(input),
         }
         eprintln!()
     }
