@@ -1,6 +1,7 @@
 struct Tree {
     height: u8,
     visible: bool,
+    scenic: usize,
 }
 
 struct Grid {
@@ -19,6 +20,7 @@ impl Grid {
             .map(|c| Tree {
                 height: (c as u32 - '0' as u32) as u8,
                 visible: false,
+                scenic: 0,
             })
             .collect();
         Self {
@@ -46,6 +48,18 @@ impl Grid {
             }
         }
     }
+
+    fn viewing_distance(&mut self, height: u8, xy: impl Iterator<Item = (usize, usize)>) -> usize {
+        let mut count = 0;
+        for (x, y) in xy {
+            count += 1;
+            let new_height = self.at_mut(x, y).unwrap().height;
+            if new_height >= height {
+                break;
+            }
+        }
+        count
+    }
 }
 
 pub fn solve(input: String) {
@@ -59,7 +73,19 @@ pub fn solve(input: String) {
         trees.scan_visibility((0..trees.height).map(|y| (x, y)));
         trees.scan_visibility((0..trees.height).map(|y| (x, y)).rev());
     }
-
     let part1 = trees.trees.iter().filter(|t| t.visible).count();
     println!("Part 1: {part1}");
+
+    for y in 0..trees.height {
+        for x in 0..trees.width {
+            let height = trees.at_mut(x, y).unwrap().height;
+            let up = trees.viewing_distance(height, (0..y).rev().map(|y| (x, y)));
+            let down = trees.viewing_distance(height, (y..trees.height).skip(1).map(|y| (x, y)));
+            let left = trees.viewing_distance(height, (0..x).rev().map(|x| (x, y)));
+            let right = trees.viewing_distance(height, (x..trees.width).skip(1).map(|x| (x, y)));
+            trees.at_mut(x, y).unwrap().scenic = up * down * left * right;
+        }
+    }
+    let part2 = trees.trees.iter().map(|t| t.scenic).max().unwrap();
+    println!("Part 2: {part2}");
 }
