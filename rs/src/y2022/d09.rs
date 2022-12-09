@@ -1,54 +1,34 @@
 use std::collections::HashSet;
 use std::iter;
 
-fn move_head(dir: &str, head: (i32, i32)) -> (i32, i32) {
-    match dir {
-        "L" => (head.0 - 1, head.1),
-        "R" => (head.0 + 1, head.1),
-        "D" => (head.0, head.1 - 1),
-        "U" => (head.0, head.1 + 1),
-        _ => head,
-    }
-}
-
-fn move_tail(anchor: (i32, i32), tail: (i32, i32)) -> (i32, i32) {
-    let mut dx = anchor.0 - tail.0;
-    let mut dy = anchor.1 - tail.1;
-
-    if dx.abs() == dy.abs() {
-        // Move diagonally
-        dx = dx.signum();
-        dy = dy.signum();
-    } else {
-        // Move diagonally until either dx or dy is 0, then catch up along the
-        // remaining axis.
-        let diagonal_steps = dx.abs().min(dy.abs());
-        dx = (dx - dx.signum() * diagonal_steps).signum();
-        dy = (dy - dy.signum() * diagonal_steps).signum();
-    }
-
-    (anchor.0 - dx, anchor.1 - dy)
-}
-
 fn simulate_rope(input: &str, segments: usize) -> usize {
-    let mut head = (0, 0);
+    let mut head = (0_i32, 0_i32);
     let mut tails = vec![(0, 0); segments - 1];
-    let mut tail_trail = HashSet::new();
+    let mut trail = HashSet::new();
     for line in input.lines() {
         let (dir, amount) = line.split_once(' ').unwrap();
         let amount = amount.parse::<i32>().unwrap();
         for _ in 0..amount {
-            head = move_head(dir, head);
+            match dir {
+                "L" => head.0 -= 1,
+                "R" => head.0 += 1,
+                "D" => head.1 -= 1,
+                "U" => head.1 += 1,
+                _ => panic!(),
+            }
             let mut anchor = head;
             for tail in &mut tails {
-                *tail = move_tail(anchor, *tail);
+                let (dx, dy) = (anchor.0 - tail.0, anchor.1 - tail.1);
+                if dx.abs() > 1 || dy.abs() > 1 {
+                    tail.0 += dx.signum();
+                    tail.1 += dy.signum();
+                }
                 anchor = *tail;
             }
-            tail_trail.insert(anchor);
+            trail.insert(anchor);
         }
-        // eprint_field(head, &tails, &tail_trail);
     }
-    tail_trail.len()
+    trail.len()
 }
 
 pub fn solve(input: String) {
@@ -75,11 +55,11 @@ fn eprint_field(head: (i32, i32), tails: &[(i32, i32)], trail: &HashSet<(i32, i3
     for (x, y) in trail.iter() {
         set(&mut field, *x, *y, '#');
     }
+    set(&mut field, 0, 0, 's');
     for (i, (x, y)) in tails.iter().enumerate().rev() {
         set(&mut field, *x, *y, (('1' as usize) + i) as u8 as char);
     }
     set(&mut field, head.0, head.1, 'H');
-    set(&mut field, 0, 0, 's');
     for row in field.into_iter().rev() {
         eprintln!(
             "{}",
