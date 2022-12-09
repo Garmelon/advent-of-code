@@ -8,7 +8,7 @@ from .y2017 import d01, d02, d03, d04, d05, d06, d07, d08, d09
 from .y2018 import d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11
 from .y2020 import d10
 from .y2021 import d14
-from .y2022 import d01, d02, d03, d04, d05, d06, d07
+from .y2022 import d01, d02, d03, d04, d05, d06, d07, d09
 
 DAYS = {
     # 2015
@@ -58,6 +58,7 @@ DAYS = {
     "2022_05": y2022.d05.solve,
     "2022_06": y2022.d06.solve,
     "2022_07": y2022.d07.solve,
+    "2022_09": y2022.d09.solve,
 }
 
 
