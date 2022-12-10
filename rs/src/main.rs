@@ -8,10 +8,10 @@ use std::{fmt, fs, io};
 use clap::Parser;
 
 macro_rules! days {
-    ( $( $day:ident : $name:expr, )* ) => {
+    ( $( $day:ident : $name:expr => $path:path, )* ) => {
         enum Day { $( $day, )* }
 
-        impl fmt::Display for Day{
+        impl fmt::Display for Day {
             fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
                 match self {
                     $( Self::$day => $name, )*
@@ -28,6 +28,14 @@ macro_rules! days {
                 })
             }
         }
+
+        impl Day {
+            fn solve(self, input: String) {
+                match self {
+                    $( Self::$day => $path(input), )*
+                }
+            }
+        }
     };
 }
 
@@ -40,15 +48,15 @@ impl Day {
 }
 
 days! {
-    Y2022D01: "2022_01",
-    Y2022D02: "2022_02",
-    Y2022D03: "2022_03",
-    Y2022D04: "2022_04",
-    Y2022D05: "2022_05",
-    Y2022D06: "2022_06",
-    Y2022D07: "2022_07",
-    Y2022D08: "2022_08",
-    Y2022D09: "2022_09",
+    Y2022D01: "2022_01" => y2022::d01::solve,
+    Y2022D02: "2022_02" => y2022::d02::solve,
+    Y2022D03: "2022_03" => y2022::d03::solve,
+    Y2022D04: "2022_04" => y2022::d04::solve,
+    Y2022D05: "2022_05" => y2022::d05::solve,
+    Y2022D06: "2022_06" => y2022::d06::solve,
+    Y2022D07: "2022_07" => y2022::d07::solve,
+    Y2022D08: "2022_08" => y2022::d08::solve,
+    Y2022D09: "2022_09" => y2022::d09::solve,
 }
 
 #[derive(Parser)]
@@ -71,17 +79,7 @@ fn main() -> io::Result<()> {
 
         eprintln!("### Solving {file:?}");
         let input = fs::read_to_string(file)?;
-        match day {
-            Day::Y2022D01 => y2022::d01::solve(input),
-            Day::Y2022D02 => y2022::d02::solve(input),
-            Day::Y2022D03 => y2022::d03::solve(input),
-            Day::Y2022D04 => y2022::d04::solve(input),
-            Day::Y2022D05 => y2022::d05::solve(input),
-            Day::Y2022D06 => y2022::d06::solve(input),
-            Day::Y2022D07 => y2022::d07::solve(input),
-            Day::Y2022D08 => y2022::d08::solve(input),
-            Day::Y2022D09 => y2022::d09::solve(input),
-        }
+        day.solve(input);
         eprintln!()
     }
 
