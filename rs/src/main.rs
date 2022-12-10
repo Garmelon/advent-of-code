@@ -41,8 +41,11 @@ macro_rules! days {
 
 impl Day {
     fn from_path(path: &Path) -> Option<Self> {
-        let day = &path.file_stem()?.as_bytes()[..7];
-        let day = String::from_utf8_lossy(day);
+        let bytes = path.file_stem()?.as_bytes();
+        if bytes.len() < 7 {
+            return None;
+        }
+        let day = String::from_utf8_lossy(&bytes[..7]);
         Self::from_str(&day).ok()
     }
 }
@@ -57,6 +60,7 @@ days! {
     Y2022D07: "2022_07" => y2022::d07::solve,
     Y2022D08: "2022_08" => y2022::d08::solve,
     Y2022D09: "2022_09" => y2022::d09::solve,
+    Y2022D10: "2022_10" => y2022::d10::solve,
 }
 
 #[derive(Parser)]
