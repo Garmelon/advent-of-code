@@ -44,4 +44,16 @@ pub fn solve(input: String) {
         .map(|i| run.history[i - 1].x * i as i32)
         .sum::<i32>();
     println!("Part 1: {part1}");
+
+    println!("Part 2:");
+    for chunk in run.history.chunks(40) {
+        for (x, state) in chunk.iter().enumerate() {
+            if (x as i32).abs_diff(state.x) <= 1 {
+                print!("#");
+            } else {
+                print!(".");
+            }
+        }
+        println!();
+    }
 }
