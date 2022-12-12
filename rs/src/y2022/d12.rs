@@ -150,8 +150,12 @@ fn path_length(steps: &Grid<Step>, start: (i32, i32), end: (i32, i32)) -> usize 
     let mut pos = end;
     let mut length = 0;
     while pos != start {
-        pos = steps.ati(pos.0, pos.1).unwrap().prev;
-        length += 1;
+        if let Some(step) = steps.ati(pos.0, pos.1) {
+            pos = step.prev;
+            length += 1;
+        } else {
+            return usize::MAX;
+        }
     }
     length
 }
@@ -185,4 +189,18 @@ pub fn solve(input: String) {
     let steps = dijkstra(&grid, starti, endi);
     let part1 = path_length(&steps, starti, endi);
     println!("Part 1: {part1}");
+
+    let mut part2 = usize::MAX;
+    for y in 0..grid.height {
+        for x in 0..grid.width {
+            if *grid.at(x, y).unwrap() == 0 {
+                let starti = (x as i32, y as i32);
+                let endi = (end.0 as i32, end.1 as i32);
+                let steps = dijkstra(&grid, starti, endi);
+                let length = path_length(&steps, starti, endi);
+                part2 = part2.min(length);
+            }
+        }
+    }
+    println!("Part 2: {part2}");
 }
