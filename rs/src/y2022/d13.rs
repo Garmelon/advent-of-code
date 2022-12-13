@@ -1,8 +1,9 @@
 use std::cmp::Ordering;
-use std::fmt;
 use std::iter::Peekable;
 use std::str::Chars;
+use std::{fmt, iter};
 
+#[derive(Clone)]
 enum Message {
     Int(u32),
     List(Vec<Message>),
@@ -97,4 +98,27 @@ pub fn solve(input: String) {
         .map(|(i, _)| i + 1)
         .sum::<usize>();
     println!("Part 1: {part1}");
+
+    let divp1 = vec![Message::List(vec![Message::Int(2)])];
+    let divp2 = vec![Message::List(vec![Message::Int(6)])];
+    let mut packets = pairs
+        .into_iter()
+        .flat_map(|(a, b)| iter::once(a).chain(iter::once(b)))
+        .chain(iter::once(divp1.clone()))
+        .chain(iter::once(divp2.clone()))
+        .collect::<Vec<_>>();
+    packets.sort();
+    let divp1i = packets
+        .iter()
+        .enumerate()
+        .find(|(_, p)| *p == &divp1)
+        .unwrap()
+        .0;
+    let divp2i = packets
+        .iter()
+        .enumerate()
+        .find(|(_, p)| *p == &divp2)
+        .unwrap()
+        .0;
+    println!("Part 2: {}", (divp1i + 1) * (divp2i + 1));
 }
