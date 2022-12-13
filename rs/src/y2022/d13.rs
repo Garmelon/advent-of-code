@@ -1,21 +1,11 @@
 use std::cmp::Ordering;
-use std::iter::Peekable;
+use std::iter::{self, Peekable};
 use std::str::Chars;
-use std::{fmt, iter};
 
 #[derive(Clone)]
 enum Message {
     Int(u32),
     List(Vec<Message>),
-}
-
-impl fmt::Debug for Message {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Int(int) => int.fmt(f),
-            Self::List(list) => f.debug_list().entries(list).finish(),
-        }
-    }
 }
 
 impl Ord for Message {
