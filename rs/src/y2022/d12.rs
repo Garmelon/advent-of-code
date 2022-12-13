@@ -93,7 +93,7 @@ impl Step {
     }
 }
 
-fn neighbours(grid: &Grid<u32>, pos: (i32, i32)) -> Vec<(i32, i32)> {
+fn backwards_neighbours(grid: &Grid<u32>, pos: (i32, i32)) -> Vec<(i32, i32)> {
     let h = *grid.ati(pos.0, pos.1).unwrap();
 
     let mut result = vec![];
@@ -105,7 +105,7 @@ fn neighbours(grid: &Grid<u32>, pos: (i32, i32)) -> Vec<(i32, i32)> {
     ];
     for npos in potential_neighbours {
         if let Some(nh) = grid.ati(npos.0, npos.1) {
-            if *nh <= h + 1 {
+            if h <= *nh + 1 {
                 result.push(npos);
             }
         }
@@ -113,8 +113,13 @@ fn neighbours(grid: &Grid<u32>, pos: (i32, i32)) -> Vec<(i32, i32)> {
     result
 }
 
-fn dijkstra(grid: &Grid<u32>, start: (i32, i32), end: (i32, i32)) -> Grid<Step> {
+fn dijkstra<F: Fn((i32, i32), u32) -> bool>(
+    grid: &Grid<u32>,
+    start: (i32, i32),
+    end_f: F,
+) -> (Grid<Step>, (i32, i32)) {
     let mut steps = Grid::new(grid.width, grid.height, Step::empty());
+    let mut end = (-1, -1);
 
     let mut heap = BinaryHeap::new();
     heap.push(Candidate {
@@ -124,16 +129,18 @@ fn dijkstra(grid: &Grid<u32>, start: (i32, i32), end: (i32, i32)) -> Grid<Step> 
     });
 
     while let Some(Candidate { cost, pos, prev }) = heap.pop() {
+        let h = *grid.ati(pos.0, pos.1).unwrap();
         let mut current = steps.ati_mut(pos.0, pos.1).unwrap();
-        if pos == end {
+        if end_f(pos, h) {
             current.cost = cost;
             current.prev = prev;
+            end = pos;
             break;
         } else if cost < current.cost {
             current.cost = cost;
             current.prev = prev;
 
-            for neighbour in neighbours(grid, pos) {
+            for neighbour in backwards_neighbours(grid, pos) {
                 heap.push(Candidate {
                     cost: cost + 1,
                     pos: neighbour,
@@ -143,7 +150,7 @@ fn dijkstra(grid: &Grid<u32>, start: (i32, i32), end: (i32, i32)) -> Grid<Step> 
         }
     }
 
-    steps
+    (steps, end)
 }
 
 fn path_length(steps: &Grid<Step>, start: (i32, i32), end: (i32, i32)) -> usize {
@@ -186,21 +193,11 @@ pub fn solve(input: String) {
 
     let starti = (start.0 as i32, start.1 as i32);
     let endi = (end.0 as i32, end.1 as i32);
-    let steps = dijkstra(&grid, starti, endi);
-    let part1 = path_length(&steps, starti, endi);
+    let (steps, _) = dijkstra(&grid, endi, |p, _| p == starti);
+    let part1 = path_length(&steps, endi, starti);
     println!("Part 1: {part1}");
 
-    let mut part2 = usize::MAX;
-    for y in 0..grid.height {
-        for x in 0..grid.width {
-            if *grid.at(x, y).unwrap() == 0 {
-                let starti = (x as i32, y as i32);
-                let endi = (end.0 as i32, end.1 as i32);
-                let steps = dijkstra(&grid, starti, endi);
-                let length = path_length(&steps, starti, endi);
-                part2 = part2.min(length);
-            }
-        }
-    }
+    let (steps, starti) = dijkstra(&grid, endi, |_, h| h == 0);
+    let part2 = path_length(&steps, endi, starti);
     println!("Part 2: {part2}");
 }
