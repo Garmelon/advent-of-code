@@ -38,30 +38,6 @@ impl Grid {
         Self { grid, max_y }
     }
 
-    fn insert(&mut self, pos: (i32, i32), cell: Cell) {
-        self.max_y = self.max_y.max(pos.1);
-        self.grid.insert(pos, cell);
-    }
-
-    fn eprint(&self) {
-        let min_x = (*self.grid.keys().map(|(x, _)| x).min().unwrap()).min(500);
-        let max_x = (*self.grid.keys().map(|(x, _)| x).max().unwrap()).max(500);
-        let min_y = (*self.grid.keys().map(|(_, y)| y).min().unwrap()).min(0);
-        let max_y = (*self.grid.keys().map(|(_, y)| y).max().unwrap()).max(0);
-        for y in min_y..=max_y {
-            for x in min_x..=max_x {
-                let symbol = match self.grid.get(&(x, y)) {
-                    _ if (x, y) == (500, 0) => "++",
-                    None => "..",
-                    Some(Cell::Wall) => "##",
-                    Some(Cell::Sand) => "()",
-                };
-                eprint!("{symbol}");
-            }
-            eprintln!();
-        }
-    }
-
     /// Returns `true` if the sand emitted from the source came to rest. Returns
     /// `false` if the source is blocked or the sand fell into infinity.
     fn step(&mut self, source: (i32, i32)) -> bool {
@@ -99,9 +75,9 @@ pub fn solve(input: String) {
     println!("Part 1: {part1}");
 
     let mut part2_grid = grid;
-    let floor_y = part2_grid.max_y + 2;
-    for x in 500 - floor_y..=500 + floor_y {
-        part2_grid.insert((x, floor_y), Cell::Wall);
+    part2_grid.max_y += 2;
+    for x in 500 - part2_grid.max_y..=500 + part2_grid.max_y {
+        part2_grid.grid.insert((x, part2_grid.max_y), Cell::Wall);
     }
     let mut part2 = 0;
     while part2_grid.step((500, 0)) {
