@@ -1,15 +1,16 @@
 use std::collections::HashMap;
-use std::thread;
-use std::time::Duration;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Cell {
     Wall,
     Sand,
-    Source,
 }
 
-struct Grid(HashMap<(i32, i32), Cell>);
+#[derive(Clone)]
+struct Grid {
+    grid: HashMap<(i32, i32), Cell>,
+    max_y: i32,
+}
 
 impl Grid {
     fn parse(input: &str) -> Self {
@@ -33,42 +34,53 @@ impl Grid {
                 }
             }
         }
-        Self(grid)
+        let max_y = *grid.keys().map(|(_, y)| y).max().unwrap();
+        Self { grid, max_y }
+    }
+
+    fn insert(&mut self, pos: (i32, i32), cell: Cell) {
+        self.max_y = self.max_y.max(pos.1);
+        self.grid.insert(pos, cell);
     }
 
     fn eprint(&self) {
-        let min_x = *self.0.keys().map(|(x, _)| x).min().unwrap();
-        let max_x = *self.0.keys().map(|(x, _)| x).max().unwrap();
-        let min_y = *self.0.keys().map(|(_, y)| y).min().unwrap();
-        let max_y = *self.0.keys().map(|(_, y)| y).max().unwrap();
+        let min_x = (*self.grid.keys().map(|(x, _)| x).min().unwrap()).min(500);
+        let max_x = (*self.grid.keys().map(|(x, _)| x).max().unwrap()).max(500);
+        let min_y = (*self.grid.keys().map(|(_, y)| y).min().unwrap()).min(0);
+        let max_y = (*self.grid.keys().map(|(_, y)| y).max().unwrap()).max(0);
         for y in min_y..=max_y {
             for x in min_x..=max_x {
-                match self.0.get(&(x, y)) {
-                    None => eprint!(".."),
-                    Some(Cell::Wall) => eprint!("##"),
-                    Some(Cell::Sand) => eprint!("()"),
-                    Some(Cell::Source) => eprint!("++"),
-                }
+                let symbol = match self.grid.get(&(x, y)) {
+                    _ if (x, y) == (500, 0) => "++",
+                    None => "..",
+                    Some(Cell::Wall) => "##",
+                    Some(Cell::Sand) => "()",
+                };
+                eprint!("{symbol}");
             }
             eprintln!();
         }
     }
 
-    /// Returns true if the sand emitted from the source came to rest.
+    /// Returns `true` if the sand emitted from the source came to rest. Returns
+    /// `false` if the source is blocked or the sand fell into infinity.
     fn step(&mut self, source: (i32, i32)) -> bool {
+        if self.grid.get(&source).is_some() {
+            return false;
+        }
+
         let (mut x, mut y) = source;
-        let max_y = *self.0.keys().map(|(_, y)| y).max().unwrap();
-        while y <= max_y {
-            if self.0.get(&(x, y + 1)).is_none() {
+        while y <= self.max_y {
+            if self.grid.get(&(x, y + 1)).is_none() {
                 y += 1;
-            } else if self.0.get(&(x - 1, y + 1)).is_none() {
+            } else if self.grid.get(&(x - 1, y + 1)).is_none() {
                 x -= 1;
                 y += 1;
-            } else if self.0.get(&(x + 1, y + 1)).is_none() {
+            } else if self.grid.get(&(x + 1, y + 1)).is_none() {
                 x += 1;
                 y += 1;
             } else {
-                self.0.insert((x, y), Cell::Sand);
+                self.grid.insert((x, y), Cell::Sand);
                 return true;
             }
         }
@@ -77,15 +89,23 @@ impl Grid {
 }
 
 pub fn solve(input: String) {
-    let mut grid = Grid::parse(&input);
-    // grid.eprint();
+    let grid = Grid::parse(&input);
 
+    let mut part1_grid = grid.clone();
     let mut part1 = 0;
-    while grid.step((500, 0)) {
+    while part1_grid.step((500, 0)) {
         part1 += 1;
-        // eprintln!("\x1b[;H\x1b[J");
-        // eprintln!();
-        // grid.eprint();
     }
     println!("Part 1: {part1}");
+
+    let mut part2_grid = grid;
+    let floor_y = part2_grid.max_y + 2;
+    for x in 500 - floor_y..=500 + floor_y {
+        part2_grid.insert((x, floor_y), Cell::Wall);
+    }
+    let mut part2 = 0;
+    while part2_grid.step((500, 0)) {
+        part2 += 1;
+    }
+    println!("Part 2: {part2}");
 }
