@@ -1,5 +1,9 @@
 use std::collections::BinaryHeap;
 
+// This could've been implemented a lot simpler by
+// 1. Using a HashMap<(i32, i32), usize> as a grid
+// 2. Using a simple (round-based?) BFS instead of a Dijkstra
+
 #[derive(Debug)]
 struct Grid<T> {
     width: usize,
