@@ -1,28 +1,29 @@
 use std::mem;
 use std::str::Lines;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 enum Operation {
-    Add,
-    Mul,
+    Add(u64),
+    Mul(u64),
+    #[default]
+    Square,
 }
 
 impl Operation {
-    fn eval(self, lhs: u64, rhs: u64) -> u64 {
+    fn eval(self, old: u64) -> u64 {
         match self {
-            Self::Add => lhs + rhs,
-            Self::Mul => lhs * rhs,
+            Self::Add(lit) => old + lit,
+            Self::Mul(lit) => old * lit,
+            Self::Square => old * old,
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct Monkey {
     holds: Vec<u64>,
 
-    // Left hand side is always "old"
     op: Operation,
-    rhs: Option<u64>,
 
     div_by: u64,
     if_true: usize,
@@ -48,14 +49,11 @@ impl Monkey {
         let (op, rhs) = prefixed(&mut lines, "  Operation: new = old ")
             .split_once(' ')
             .unwrap();
-        let op = match op {
-            "+" => Operation::Add,
-            "*" => Operation::Mul,
+        let op = match (op, rhs) {
+            ("+", _) => Operation::Add(rhs.parse().unwrap()),
+            ("*", "old") => Operation::Square,
+            ("*", _) => Operation::Mul(rhs.parse().unwrap()),
             _ => panic!(),
-        };
-        let rhs = match rhs {
-            "old" => None,
-            _ => Some(rhs.parse().unwrap()),
         };
 
         let div_by = prefixed(&mut lines, "  Test: divisible by ")
@@ -73,7 +71,6 @@ impl Monkey {
         Self {
             holds,
             op,
-            rhs,
             div_by,
             if_true,
             if_false,
@@ -81,31 +78,30 @@ impl Monkey {
         }
     }
 
-    fn take(&mut self) -> Self {
-        Self {
-            holds: mem::take(&mut self.holds),
-            op: self.op,
-            rhs: self.rhs,
-            div_by: self.div_by,
-            if_true: self.if_true,
-            if_false: self.if_false,
-            inspections: self.inspections,
-        }
+    fn fill_into(&mut self, into: &mut Self) {
+        mem::swap(&mut self.holds, &mut into.holds);
+        self.holds.clear();
+        into.op = self.op;
+        into.div_by = self.div_by;
+        into.if_true = self.if_true;
+        into.if_false = self.if_false;
+        into.inspections = self.inspections;
     }
 }
 
-fn round(monkeys: &mut Vec<Monkey>, reduce_worry: bool, modulo: u64) {
+#[inline]
+fn round(monkeys: &mut Vec<Monkey>, swapmonkey: &mut Monkey, reduce_worry: bool, modulo: u64) {
     for i in 0..monkeys.len() {
         monkeys[i].inspections += monkeys[i].holds.len();
-        let monkey = monkeys[i].take();
-        for item in monkey.holds {
-            let item = monkey.op.eval(item, monkey.rhs.unwrap_or(item));
+        monkeys[i].fill_into(swapmonkey);
+        for item in &swapmonkey.holds {
+            let item = swapmonkey.op.eval(*item);
             let item = if reduce_worry { item / 3 } else { item };
             let item = item % modulo;
-            let target = if item % monkey.div_by == 0 {
-                monkey.if_true
+            let target = if item % swapmonkey.div_by == 0 {
+                swapmonkey.if_true
             } else {
-                monkey.if_false
+                swapmonkey.if_false
             };
             monkeys[target].holds.push(item);
         }
@@ -123,19 +119,20 @@ pub fn solve(input: String) {
     for monkey in input.trim().split("\n\n") {
         monkeys.push(Monkey::parse(monkey));
     }
+    let mut swapmonkey = Monkey::default();
 
     let common_multiple = monkeys.iter().map(|m| m.div_by).product::<u64>();
     eprintln!("Common multiple: {common_multiple}");
 
     let mut part1 = monkeys.clone();
     for _ in 0..20 {
-        round(&mut part1, true, common_multiple);
+        round(&mut part1, &mut swapmonkey, true, common_multiple);
     }
     println!("Part 1: {}", monkey_business(&part1));
 
     let mut part2 = monkeys.clone();
     for _ in 0..10000 {
-        round(&mut part2, false, common_multiple);
+        round(&mut part2, &mut swapmonkey, false, common_multiple);
     }
     println!("Part 2: {}", monkey_business(&part2));
 }
