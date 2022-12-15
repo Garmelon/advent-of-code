@@ -1,203 +1,70 @@
-use std::collections::BinaryHeap;
+use std::collections::{HashMap, HashSet};
 
-// This could've been implemented a lot simpler by
-// 1. Using a HashMap<(i32, i32), usize> as a grid
-// 2. Using a simple (round-based?) BFS instead of a Dijkstra
+type Grid = HashMap<(i32, i32), u32>;
 
-#[derive(Debug)]
-struct Grid<T> {
-    width: usize,
-    height: usize,
-    cells: Vec<T>,
+fn neighbours(grid: &Grid, (x, y): (i32, i32)) -> impl Iterator<Item = (i32, i32)> + '_ {
+    let height = grid.get(&(x, y)).cloned().unwrap_or(u32::MAX);
+    [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+        .into_iter()
+        .filter(move |n| {
+            let height2 = grid.get(n).cloned().unwrap_or(u32::MAX);
+            // One step down or arbitrarily many steps up are allowed
+            height2.saturating_add(1) >= height
+        })
 }
 
-impl<T> Grid<T> {
-    fn new(width: usize, height: usize, initial_value: T) -> Self
-    where
-        T: Clone,
-    {
-        Self {
-            width,
-            height,
-            cells: vec![initial_value; width * height],
-        }
-    }
+fn bfs(grid: &Grid, start: (i32, i32), until: impl Fn((i32, i32)) -> bool) -> usize {
+    let mut visited = HashSet::new();
+    let mut queue = HashSet::new();
+    let mut steps = 0;
 
-    fn index(&self, x: usize, y: usize) -> Option<usize> {
-        if x >= self.width || y >= self.height {
-            None
-        } else {
-            Some(y * self.width + x)
-        }
-    }
+    queue.insert(start);
 
-    fn at_mut(&mut self, x: usize, y: usize) -> Option<&mut T> {
-        let index = self.index(x, y)?;
-        Some(&mut self.cells[index])
-    }
+    loop {
+        let mut new_queue = HashSet::new();
+        for pos in queue {
+            if until(pos) {
+                return steps;
+            }
 
-    fn indexi(&self, x: i32, y: i32) -> Option<usize> {
-        let width = self.width as i32;
-        let height = self.height as i32;
-        if x < 0 || x >= width || y < 0 || y >= height {
-            None
-        } else {
-            Some((y * width + x) as usize)
-        }
-    }
-
-    fn ati(&self, x: i32, y: i32) -> Option<&T> {
-        Some(&self.cells[self.indexi(x, y)?])
-    }
-
-    fn ati_mut(&mut self, x: i32, y: i32) -> Option<&mut T> {
-        let index = self.indexi(x, y)?;
-        Some(&mut self.cells[index])
-    }
-}
-
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
-struct Candidate {
-    cost: usize,
-    pos: (i32, i32),
-    prev: (i32, i32),
-}
-
-impl Ord for Candidate {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        (other.cost)
-            .cmp(&self.cost)
-            .then_with(|| self.pos.cmp(&other.pos))
-            .then_with(|| self.prev.cmp(&other.prev))
-    }
-}
-
-impl PartialOrd for Candidate {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Step {
-    cost: usize,
-    prev: (i32, i32),
-}
-
-impl Step {
-    fn empty() -> Self {
-        Self {
-            cost: usize::MAX,
-            prev: (-1, -1),
-        }
-    }
-}
-
-fn backwards_neighbours(grid: &Grid<u32>, pos: (i32, i32)) -> Vec<(i32, i32)> {
-    let h = *grid.ati(pos.0, pos.1).unwrap();
-
-    let mut result = vec![];
-    let potential_neighbours = [
-        (pos.0 - 1, pos.1),
-        (pos.0 + 1, pos.1),
-        (pos.0, pos.1 - 1),
-        (pos.0, pos.1 + 1),
-    ];
-    for npos in potential_neighbours {
-        if let Some(nh) = grid.ati(npos.0, npos.1) {
-            if h <= *nh + 1 {
-                result.push(npos);
+            for neighbour in neighbours(grid, pos) {
+                if !visited.contains(&neighbour) {
+                    visited.insert(neighbour);
+                    new_queue.insert(neighbour);
+                }
             }
         }
+        queue = new_queue;
+        steps += 1;
     }
-    result
-}
-
-fn dijkstra<F: Fn((i32, i32), u32) -> bool>(
-    grid: &Grid<u32>,
-    start: (i32, i32),
-    end_f: F,
-) -> (Grid<Step>, (i32, i32)) {
-    let mut steps = Grid::new(grid.width, grid.height, Step::empty());
-    let mut end = (-1, -1);
-
-    let mut heap = BinaryHeap::new();
-    heap.push(Candidate {
-        cost: 0,
-        pos: start,
-        prev: start,
-    });
-
-    while let Some(Candidate { cost, pos, prev }) = heap.pop() {
-        let h = *grid.ati(pos.0, pos.1).unwrap();
-        let mut current = steps.ati_mut(pos.0, pos.1).unwrap();
-        if end_f(pos, h) {
-            current.cost = cost;
-            current.prev = prev;
-            end = pos;
-            break;
-        } else if cost < current.cost {
-            current.cost = cost;
-            current.prev = prev;
-
-            for neighbour in backwards_neighbours(grid, pos) {
-                heap.push(Candidate {
-                    cost: cost + 1,
-                    pos: neighbour,
-                    prev: pos,
-                })
-            }
-        }
-    }
-
-    (steps, end)
-}
-
-fn path_length(steps: &Grid<Step>, start: (i32, i32), end: (i32, i32)) -> usize {
-    let mut pos = end;
-    let mut length = 0;
-    while pos != start {
-        if let Some(step) = steps.ati(pos.0, pos.1) {
-            pos = step.prev;
-            length += 1;
-        } else {
-            return usize::MAX;
-        }
-    }
-    length
 }
 
 pub fn solve(input: String) {
-    let width = input.lines().next().unwrap().len();
-    let height = input.lines().count();
-
-    let mut start = (0, 0);
-    let mut end = (0, 0);
-    let mut grid = Grid::new(width, height, 0);
+    let mut start = (-1, -1);
+    let mut end = (-1, -1);
+    let mut grid = HashMap::new();
     for (y, line) in input.lines().enumerate() {
         for (x, c) in line.chars().enumerate() {
-            let c = match c {
-                'S' => {
-                    start = (x, y);
-                    'a'
-                }
-                'E' => {
-                    end = (x, y);
-                    'z'
-                }
+            let pos = (x as i32, y as i32);
+            match c {
+                'S' => start = pos,
+                'E' => end = pos,
+                _ => {}
+            }
+
+            let height = match c {
+                'S' => 'a',
+                'E' => 'z',
                 _ => c,
             };
-            *grid.at_mut(x, y).unwrap() = c as u32 - 'a' as u32;
+            let height = height as u32 - 'a' as u32;
+            grid.insert(pos, height);
         }
     }
 
-    let starti = (start.0 as i32, start.1 as i32);
-    let endi = (end.0 as i32, end.1 as i32);
-    let (steps, _) = dijkstra(&grid, endi, |p, _| p == starti);
-    let part1 = path_length(&steps, endi, starti);
+    let part1 = bfs(&grid, end, |pos| pos == start);
     println!("Part 1: {part1}");
 
-    let (steps, starti) = dijkstra(&grid, endi, |_, h| h == 0);
-    let part2 = path_length(&steps, endi, starti);
+    let part2 = bfs(&grid, end, |pos| grid.get(&pos) == Some(&0));
     println!("Part 2: {part2}");
 }
