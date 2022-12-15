@@ -1,87 +1,139 @@
-use std::collections::HashMap;
+use std::ops::{Index, IndexMut};
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Cell {
-    Wall,
-    Sand,
-}
-
-#[derive(Clone)]
 struct Grid {
-    grid: HashMap<(i32, i32), Cell>,
-    max_y: i32,
+    width: usize,
+    height: usize,
+    cells: Vec<bool>,
 }
 
 impl Grid {
-    fn parse(input: &str) -> Self {
-        let mut grid = HashMap::new();
-        for line in input.lines() {
-            let mut corners = line.split(" -> ").map(|s| {
-                let (x, y) = s.split_once(',').unwrap();
-                (x.parse::<i32>().unwrap(), y.parse::<i32>().unwrap())
-            });
-
-            let mut cur = corners.next().unwrap();
-            grid.insert(cur, Cell::Wall);
-
-            for next in corners {
-                let dir = ((next.0 - cur.0).signum(), (next.1 - cur.1).signum());
-                assert!(dir.0 == 0 || dir.1 == 0);
-                while cur != next {
-                    cur.0 += dir.0;
-                    cur.1 += dir.1;
-                    grid.insert(cur, Cell::Wall);
-                }
-            }
+    fn new(width: usize, height: usize, initial: bool) -> Self {
+        Self {
+            width,
+            height,
+            cells: vec![initial; width * height],
         }
-        let max_y = *grid.keys().map(|(_, y)| y).max().unwrap();
-        Self { grid, max_y }
     }
+}
 
-    /// Returns `true` if the sand emitted from the source came to rest. Returns
-    /// `false` if the source is blocked or the sand fell into infinity.
-    fn step(&mut self, source: (i32, i32)) -> bool {
-        if self.grid.get(&source).is_some() {
-            return false;
-        }
+impl Index<(i32, i32)> for Grid {
+    type Output = bool;
 
-        let (mut x, mut y) = source;
-        while y <= self.max_y {
-            if self.grid.get(&(x, y + 1)).is_none() {
-                y += 1;
-            } else if self.grid.get(&(x - 1, y + 1)).is_none() {
-                x -= 1;
-                y += 1;
-            } else if self.grid.get(&(x + 1, y + 1)).is_none() {
-                x += 1;
-                y += 1;
-            } else {
-                self.grid.insert((x, y), Cell::Sand);
-                return true;
+    fn index(&self, index: (i32, i32)) -> &Self::Output {
+        assert!(index.0 >= 0);
+        assert!(index.1 >= 0);
+        let (x, y) = (index.0 as usize, index.1 as usize);
+        assert!(x < self.width);
+        assert!(y < self.height);
+        self.cells.index(y * self.width + x)
+    }
+}
+
+impl IndexMut<(i32, i32)> for Grid {
+    fn index_mut(&mut self, index: (i32, i32)) -> &mut Self::Output {
+        assert!(index.0 >= 0);
+        assert!(index.1 >= 0);
+        let (x, y) = (index.0 as usize, index.1 as usize);
+        assert!(x < self.width);
+        assert!(y < self.height);
+        self.cells.index_mut(y * self.width + x)
+    }
+}
+
+fn parse_tuple(s: &str) -> (i32, i32) {
+    let (x, y) = s.split_once(',').unwrap();
+    (x.parse().unwrap(), y.parse().unwrap())
+}
+
+fn draw_lines(grid: &mut Grid, lines: Vec<Vec<(i32, i32)>>) {
+    for line in lines {
+        let mut line = line.into_iter();
+
+        let mut cur = line.next().unwrap();
+        grid[cur] = true;
+
+        for next in line {
+            let dir = ((next.0 - cur.0).signum(), (next.1 - cur.1).signum());
+            assert!(dir.0 == 0 || dir.1 == 0);
+            while cur != next {
+                cur.0 += dir.0;
+                cur.1 += dir.1;
+                grid[cur] = true;
             }
         }
-        false
+    }
+}
+
+fn draw_floor(grid: &mut Grid) {
+    let y = grid.height as i32 - 1;
+    for x in 0..grid.width {
+        grid[(x as i32, y)] = true;
+    }
+}
+
+/// The `path` is a glorified source. It is where the next unit of sand should
+/// spawn. In particular, this function needs to ensure that when it returns,
+/// the last element of the path should be the correct place to spawn the next
+/// unit of sand. If the path is empty after this function returns, the original
+/// source has been covered by sand.
+///
+/// The last row where this function will deposit sand is `max_y`.
+///
+/// This function will return `true` if it managed to deposit a unit of sand.
+fn drop(grid: &mut Grid, path: &mut Vec<(i32, i32)>, max_y: i32) -> bool {
+    let (mut x, mut y) = match path.last() {
+        Some(pos) => pos,
+        None => return false,
+    };
+
+    loop {
+        if y + 1 > max_y {
+            return false;
+        } else if !grid[(x, y + 1)] {
+            y += 1;
+            path.push((x, y));
+        } else if !grid[(x - 1, y + 1)] {
+            x -= 1;
+            y += 1;
+            path.push((x, y));
+        } else if !grid[(x + 1, y + 1)] {
+            x += 1;
+            y += 1;
+            path.push((x, y));
+        } else {
+            grid[(x, y)] = true;
+            path.pop();
+            return true;
+        }
     }
 }
 
 pub fn solve(input: String) {
-    let grid = Grid::parse(&input);
+    let lines = input
+        .lines()
+        .map(|l| l.split(" -> ").map(parse_tuple).collect::<Vec<_>>())
+        .collect::<Vec<_>>();
 
-    let mut part1_grid = grid.clone();
-    let mut part1 = 0;
-    while part1_grid.step((500, 0)) {
-        part1 += 1;
+    let mut max_x = 500;
+    let mut max_y = 0;
+    for (x, y) in lines.iter().flat_map(|l| l.iter()) {
+        max_x = max_x.max(*x);
+        max_y = max_y.max(*y);
     }
-    println!("Part 1: {part1}");
 
-    let mut part2_grid = grid;
-    part2_grid.max_y += 2;
-    for x in 500 - part2_grid.max_y..=500 + part2_grid.max_y {
-        part2_grid.grid.insert((x, part2_grid.max_y), Cell::Wall);
+    let mut grid = Grid::new((max_x + max_y) as usize, (max_y + 3) as usize, false);
+    draw_lines(&mut grid, lines);
+    draw_floor(&mut grid);
+
+    let mut path = vec![(500, 0)];
+    let mut drop_count = 0;
+    while drop(&mut grid, &mut path, max_y) {
+        drop_count += 1;
     }
-    let mut part2 = 0;
-    while part2_grid.step((500, 0)) {
-        part2 += 1;
+    println!("Part 1: {drop_count}");
+
+    while drop(&mut grid, &mut path, max_y + 2) {
+        drop_count += 1;
     }
-    println!("Part 2: {part2}");
+    println!("Part 2: {drop_count}");
 }
