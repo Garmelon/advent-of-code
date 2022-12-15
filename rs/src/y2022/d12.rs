@@ -31,10 +31,6 @@ impl<T> Grid<T> {
         }
     }
 
-    fn at(&self, x: usize, y: usize) -> Option<&T> {
-        Some(&self.cells[self.index(x, y)?])
-    }
-
     fn at_mut(&mut self, x: usize, y: usize) -> Option<&mut T> {
         let index = self.index(x, y)?;
         Some(&mut self.cells[index])
