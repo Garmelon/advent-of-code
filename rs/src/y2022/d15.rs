@@ -126,7 +126,7 @@ pub fn solve(input: String) {
         lines_trbl.push((p.0 + d + 1, p.1, p.0, p.1 + d + 1));
     }
 
-    for tlbr in &lines_tlbr {
+    'outer: for tlbr in &lines_tlbr {
         for trbl in &lines_trbl {
             if let Some(intersect) = intersect_lines(*tlbr, *trbl) {
                 let x_in_bounds = 0 <= intersect.0 && intersect.0 <= 4000000;
@@ -147,7 +147,7 @@ pub fn solve(input: String) {
                 // We found our candidate :)
                 let tuning_frequency = intersect.0 as i64 * 4000000 + intersect.1 as i64;
                 println!("Part 2: {tuning_frequency}");
-                return;
+                break 'outer;
             }
         }
     }

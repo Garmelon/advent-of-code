@@ -81,9 +81,8 @@ fn draw_floor(grid: &mut Grid) {
 ///
 /// This function will return `true` if it managed to deposit a unit of sand.
 fn drop(grid: &mut Grid, path: &mut Vec<(i32, i32)>, max_y: i32) -> bool {
-    let (mut x, mut y) = match path.last() {
-        Some(pos) => pos,
-        None => return false,
+    let Some((mut x, mut y)) = path.last() else {
+        return false;
     };
 
     loop {
