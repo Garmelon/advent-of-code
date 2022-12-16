@@ -243,17 +243,8 @@ fn solve_part_2(names: &HashMap<&str, usize>, valves: &[Valve], powerset: &[Open
     let mut variations = vec![];
     for (own_id, own_valve) in valves.iter().enumerate() {
         for (el_id, el_valve) in valves.iter().enumerate() {
-            for open in powerset {
-                variations.push((own_id, own_valve, el_id, el_valve, open));
-            }
+            variations.push((own_id, own_valve, el_id, el_valve));
         }
-    }
-
-    // Just to check whether the variations are in the correct order because I'm
-    // zipping them to curr.elems later.
-    for (i, (own_id, _, el_id, _, open)) in variations.iter().enumerate() {
-        let id = curr.powers * (curr.valves * own_id + el_id) + open.0 as usize;
-        assert_eq!(i, id);
     }
 
     for minute in 1..=26 {
@@ -263,9 +254,20 @@ fn solve_part_2(names: &HashMap<&str, usize>, valves: &[Valve], powerset: &[Open
 
         curr.elems
             .par_iter_mut()
+            .chunks(powerset.len())
             .zip(variations.par_iter())
-            .for_each(|(score, (own_id, own_valve, el_id, el_valve, open))| {
-                *score = part_2_score(minute, &prev, *own_id, own_valve, *el_id, el_valve, **open);
+            .for_each(|(scores, (own_id, own_valve, el_id, el_valve))| {
+                for (i, score) in scores.into_iter().enumerate() {
+                    *score = part_2_score(
+                        minute,
+                        &prev,
+                        *own_id,
+                        own_valve,
+                        *el_id,
+                        el_valve,
+                        OpenSet(i as u64),
+                    );
+                }
             });
     }
 
