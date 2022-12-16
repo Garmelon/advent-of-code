@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::mem;
 
 fn parse_valve(line: &str) -> (&str, u32, Vec<&str>) {
     let (name, rest) = line
@@ -74,6 +75,38 @@ impl OpenSet {
     }
 }
 
+#[derive(Debug)]
+struct Dp1 {
+    valves: usize,
+    powers: usize,
+    elems: Vec<u32>,
+}
+
+impl Dp1 {
+    fn new(valves: &[Valve], powerset: &[OpenSet]) -> Self {
+        let valves = valves.len();
+        let powers = powerset.len();
+        let elems = vec![0; valves * powers];
+        Self {
+            valves,
+            powers,
+            elems,
+        }
+    }
+
+    fn get(&self, valve_id: usize, open: OpenSet) -> u32 {
+        self.elems[self.powers * valve_id + open.0 as usize]
+    }
+
+    fn set(&mut self, valve_id: usize, open: OpenSet, score: u32) {
+        self.elems[self.powers * valve_id + open.0 as usize] = score;
+    }
+
+    fn clear(&mut self) {
+        self.elems.fill(0);
+    }
+}
+
 pub fn solve(input: String) {
     let valves = input.lines().map(parse_valve).collect::<Vec<_>>();
 
@@ -86,15 +119,8 @@ pub fn solve(input: String) {
     // - The current valve
     // - The current set of open/closed valves
 
-    let mut dp = HashMap::new();
-
-    // Initialize for end state
-    eprintln!("Minute 0");
-    for valve_id in 0..valves.len() {
-        for open in &powerset {
-            dp.insert((0_u32, valve_id, *open), 0);
-        }
-    }
+    let mut prev = Dp1::new(&valves, &powerset);
+    let mut curr = Dp1::new(&valves, &powerset);
 
     // Given valve v in minute t with set s, you can either...
     // - Go to another neighbouring valve v', points: points[v', t-1, s]
@@ -102,26 +128,30 @@ pub fn solve(input: String) {
 
     for minute in 1..=30 {
         eprintln!("Minute {minute}");
+
+        mem::swap(&mut curr, &mut prev);
+        curr.clear();
+
         for (valve_id, valve) in valves.iter().enumerate() {
             for open in &powerset {
                 let mut score = valve
                     .next
                     .iter()
-                    .map(|next_id| dp[&(minute - 1, *next_id, *open)])
+                    .map(|next_id| prev.get(*next_id, *open))
                     .max()
                     .unwrap_or(0);
 
                 if valve.rate > 0 && !open.is_open(valve_id) {
-                    let room_but_valve_open = dp[&(minute - 1, valve_id, open.open(valve_id))];
+                    let room_but_valve_open = prev.get(valve_id, open.open(valve_id));
                     let pressure_until_end = (minute - 1) * valve.rate;
                     score = score.max(room_but_valve_open + pressure_until_end);
                 }
 
-                dp.insert((minute, valve_id, *open), score);
+                curr.set(valve_id, *open, score);
             }
         }
     }
 
-    let part1 = dp[&(30, names["AA"], OpenSet::ALL_CLOSED)];
+    let part1 = curr.get(names["AA"], OpenSet::ALL_CLOSED);
     println!("Part 1: {part1}");
 }
