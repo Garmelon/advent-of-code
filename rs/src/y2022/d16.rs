@@ -77,7 +77,6 @@ impl OpenSet {
 
 #[derive(Debug)]
 struct Dp1 {
-    valves: usize,
     powers: usize,
     elems: Vec<u32>,
 }
@@ -87,11 +86,7 @@ impl Dp1 {
         let valves = valves.len();
         let powers = powerset.len();
         let elems = vec![0; valves * powers];
-        Self {
-            valves,
-            powers,
-            elems,
-        }
+        Self { powers, elems }
     }
 
     fn get(&self, valve_id: usize, open: OpenSet) -> u32 {
@@ -107,20 +102,14 @@ impl Dp1 {
     }
 }
 
-pub fn solve(input: String) {
-    let valves = input.lines().map(parse_valve).collect::<Vec<_>>();
-
-    let (names, valves) = prepare_valves(valves);
-    let powerset = OpenSet::powerset(&valves);
-    eprintln!("Powerset has size {}", powerset.len());
-
+fn solve_part_1(names: &HashMap<&str, usize>, valves: &[Valve], powerset: &[OpenSet]) -> u32 {
     // DP state consists of:
     // - The current minute
     // - The current valve
     // - The current set of open/closed valves
 
-    let mut prev = Dp1::new(&valves, &powerset);
-    let mut curr = Dp1::new(&valves, &powerset);
+    let mut prev = Dp1::new(valves, powerset);
+    let mut curr = Dp1::new(valves, powerset);
 
     // Given valve v in minute t with set s, you can either...
     // - Go to another neighbouring valve v', points: points[v', t-1, s]
@@ -133,7 +122,7 @@ pub fn solve(input: String) {
         curr.clear();
 
         for (valve_id, valve) in valves.iter().enumerate() {
-            for open in &powerset {
+            for open in powerset {
                 let mut score = valve
                     .next
                     .iter()
@@ -152,6 +141,16 @@ pub fn solve(input: String) {
         }
     }
 
-    let part1 = curr.get(names["AA"], OpenSet::ALL_CLOSED);
+    curr.get(names["AA"], OpenSet::ALL_CLOSED)
+}
+
+pub fn solve(input: String) {
+    let valves = input.lines().map(parse_valve).collect::<Vec<_>>();
+
+    let (names, valves) = prepare_valves(valves);
+    let powerset = OpenSet::powerset(&valves);
+    eprintln!("Powerset has size {}", powerset.len());
+
+    let part1 = solve_part_1(&names, &valves, &powerset);
     println!("Part 1: {part1}");
 }
