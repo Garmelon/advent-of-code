@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "inputs",
+			"path": "inputs"
+		},
+		{
+			"name": "sample_inputs",
+			"path": "sample_inputs"
+		},
+		{
+			"name": "py",
+			"path": "py"
+		}
+	],
+	"settings": {}
+}
