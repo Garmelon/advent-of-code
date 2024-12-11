@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import y2015, y2016, y2017, y2018, y2020, y2021, y2022
+from . import y2015, y2016, y2017, y2018, y2020, y2021, y2022, y2024
 
 DAYS = {
     **y2015.DAYS,
@@ -12,6 +12,7 @@ DAYS = {
     **y2020.DAYS,
     **y2021.DAYS,
     **y2022.DAYS,
+    **y2024.DAYS,
 }
 
 
