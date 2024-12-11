@@ -1,31 +1,104 @@
-def mirror_h(lines):
-    return [line[::-1] for line in lines]
+def get_char(lines, x, y):
+    if 0 <= y < len(lines):
+        line = lines[y]
+        if 0 <= x < len(line):
+            return line[x]
+    return ""
 
 
-def mirror_v(lines):
-    return lines[::-1]
+def is_pattern_at(lines, pattern, x, y):
+    for dy, line in enumerate(pattern):
+        for dx, char in enumerate(line):
+            if char == " ":
+                continue
+            if get_char(lines, x + dx, y + dy) == char:
+                continue
+            return False
+    return True
 
 
-def transpose(lines):
-    return ["".join(chars) for chars in zip(*lines)]
+def count_pattern(lines, pattern):
+    return sum(
+        is_pattern_at(lines, pattern, x, y)
+        for y, line in enumerate(lines)
+        for x, _ in enumerate(line)
+    )
 
 
-def shift(lines):
-    return [" " * i + line + " " * (len(lines) - 1 - i) for i, line in enumerate(lines)]
+def count_patterns(lines, patterns):
+    return sum(count_pattern(lines, pattern) for pattern in patterns)
 
 
-def count_xmas(lines):
-    return sum(line.count("XMAS") for line in lines)
+XMAS_PATTERNS = [
+    [
+        "XMAS",
+    ],
+    [
+        "X",
+        " M",
+        "  A",
+        "   S",
+    ],
+    [
+        "X",
+        "M",
+        "A",
+        "S",
+    ],
+    [
+        "   X",
+        "  M",
+        " A",
+        "S",
+    ],
+    [
+        "SAMX",
+    ],
+    [
+        "S",
+        " A",
+        "  M",
+        "   X",
+    ],
+    [
+        "S",
+        "A",
+        "M",
+        "X",
+    ],
+    [
+        "   S",
+        "  A",
+        " M",
+        "X",
+    ],
+]
+
+X_MAS_PATTERNS = [
+    [
+        "M M",
+        " A ",
+        "S S",
+    ],
+    [
+        "S M",
+        " A ",
+        "S M",
+    ],
+    [
+        "S S",
+        " A ",
+        "M M",
+    ],
+    [
+        "M S",
+        " A ",
+        "M S",
+    ],
+]
 
 
 def solve(inputstr):
-    w2e = inputstr.strip().split()
-    n2s = transpose(w2e)
-    nw2se = transpose(mirror_v(shift(mirror_v(w2e))))
-    ne2sw = transpose(shift(w2e))
-
-    orientations = [w2e, n2s, nw2se, ne2sw]
-    orientations = orientations + [mirror_h(o) for o in orientations]
-
-    part1 = sum(count_xmas(o) for o in orientations)
-    print(f"Part 1: {part1}")
+    lines = inputstr.strip().split()
+    print(f"Part 1: {count_patterns(lines, XMAS_PATTERNS)}")
+    print(f"Part 2: {count_patterns(lines, X_MAS_PATTERNS)}")
